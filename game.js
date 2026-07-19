@@ -17,99 +17,107 @@ const REACTION_COOLDOWN_MS = 1000;
 const FREEZE_COOLDOWN_MS = 3000;
 const POST_LEVEL_PAUSE_MS = 20000;
 const SHIELD_DAMAGE_REDUCTION = 0.15;
+const TOWER_MAX_LEVEL = 20;
+const DRAG_THRESHOLD = 10;
+const HUD_H = 60;
+const MAX_TOWERS = 24;
 
 const ZONE_PATH_MAX = TILE * 0.5;
 const ZONE_BORDER_MAX = TILE * 1.45;
 const ZONE_GRASS_MAX = TILE * 3.15;
+const TIER_BORDER = 0, TIER_GRASS = 1, TIER_FOREST = 2;
 
 const PALETTE = {
-  sceneBg: 0xf5f1fa,
-  tileBorder: 0xffd9ea,
-  tileGrass: 0xd9f0ce,
-  tileForest: 0xaed6a0,
+  sceneBg: 0xf3edfb,
+  tileBorder: 0xffd2e6,
+  tileGrass: 0xd7f0ca,
+  tileForest: 0x9fce8f,
   pathFill: 0xd6c0ea,
-  pathStroke: 0xa98cc9,
+  pathStroke: 0x9c7ecf,
   hudBg: 0xffffff,
+  hudBgTop: 0xfffaf5,
   panelBg: 0xffffff,
+  panelBgTop: 0xfff9f2,
   panelStroke: 0xd9c8ef,
-  panelStrokeSelected: 0xffb877,
-  overlay: 0x4a3a5c,
+  panelStrokeSelected: 0xff9f4d,
   textDark: '#4a3a5c',
   textMuted: '#8a76a8',
   textAccent: '#c97b2e',
+  accentA: 0xb98be0,
+  accentB: 0x7ea8f5,
+  gold: 0x8f6bd6,
 };
 
 const ELEMENT_COLORS = { hydro: 0x6fb8f5, cryo: 0xa8e0f5, pyro: 0xff9f6b, electro: 0xc2a3f0 };
 const ELEMENT_ICON = { hydro: '💧', cryo: '❄️', pyro: '🔥', electro: '⚡' };
 
 const ASSET_MANIFEST = {
-  tiles: {
-    border: 'assets/textures/border.png',
-    grass:  'assets/textures/grass.png',
-    forest: 'assets/textures/forest.png',
+  tiles: { border: 'assets/textures/border.png', grass: 'assets/textures/grass.png', forest: 'assets/textures/forest.png' },
+  masks: {
+    edge_top: 'assets/textures/masks/edge_top.png', edge_right: 'assets/textures/masks/edge_right.png',
+    edge_bottom: 'assets/textures/masks/edge_bottom.png', edge_left: 'assets/textures/masks/edge_left.png',
+    corner_tl: 'assets/textures/masks/corner_tl.png', corner_tr: 'assets/textures/masks/corner_tr.png',
+    corner_bl: 'assets/textures/masks/corner_bl.png', corner_br: 'assets/textures/masks/corner_br.png',
   },
-  characters: {
-    blade:   'assets/characters/blade.png',
-    cryo:    'assets/characters/cryo.png',
-    bomber:  'assets/characters/bomber.png',
-    hydro:   'assets/characters/hydro.png',
-    electro: 'assets/characters/electro.png',
-  },
-  mobs: {
-    grunt:    'assets/mobs/grunt.png',
-    runner:   'assets/mobs/runner.png',
-    shielded: 'assets/mobs/shielded.png',
-    wrecker:  'assets/mobs/wrecker.png',
-  },
+  characters: { blade: 'assets/characters/blade.png', cryo: 'assets/characters/cryo.png', bomber: 'assets/characters/bomber.png', hydro: 'assets/characters/hydro.png', electro: 'assets/characters/electro.png' },
+  mobs: { grunt: 'assets/mobs/grunt.png', runner: 'assets/mobs/runner.png', shielded: 'assets/mobs/shielded.png', wrecker: 'assets/mobs/wrecker.png' },
 };
 
 const ICON_MANIFEST = {
-  elements: {
-    hydro:   'assets/icons/elements/hydro.png',
-    cryo:    'assets/icons/elements/cryo.png',
-    pyro:    'assets/icons/elements/pyro.png',
-    electro: 'assets/icons/elements/electro.png',
-  },
-  themes: {
-    swift:    'assets/icons/themes/swift.png',
-    armored:  'assets/icons/themes/armored.png',
-    standard: 'assets/icons/themes/standard.png',
-    swarm:    'assets/icons/themes/swarm.png',
-    exotic:   'assets/icons/themes/exotic.png',
-  },
-  perks: {
-    goldrush: 'assets/icons/perks/goldrush.png',
-    sharp:    'assets/icons/perks/sharp.png',
-    haste:    'assets/icons/perks/haste.png',
-    walls:    'assets/icons/perks/walls.png',
-    discount: 'assets/icons/perks/discount.png',
-    swarm:    'assets/icons/perks/swarm.png',
-  },
-  ui: {
-    sell: 'assets/icons/ui/sell.png',
-  },
-};
-
-const ICON_EMOJI_FALLBACK = {
-  elements: ELEMENT_ICON,
-  ui: { sell: '🗑' },
+  elements: { hydro: 'assets/icons/elements/hydro.png', cryo: 'assets/icons/elements/cryo.png', pyro: 'assets/icons/elements/pyro.png', electro: 'assets/icons/elements/electro.png' },
+  themes: { swift: 'assets/icons/themes/swift.png', armored: 'assets/icons/themes/armored.png', standard: 'assets/icons/themes/standard.png', swarm: 'assets/icons/themes/swarm.png', exotic: 'assets/icons/themes/exotic.png' },
+  perks: { goldrush: 'assets/icons/perks/goldrush.png', sharp: 'assets/icons/perks/sharp.png', haste: 'assets/icons/perks/haste.png', walls: 'assets/icons/perks/walls.png', discount: 'assets/icons/perks/discount.png', swarm: 'assets/icons/perks/swarm.png' },
+  ui: { sell: 'assets/icons/ui/sell.png' },
 };
 
 const TOWER_TYPES = {
-  blade:   { key:'blade',   name:'Клинок-тян',  cost:50,  range:150, fireRate:500,  damage:12, color:0xff8fae, proj:0xffd6e2, splash:0,  element:null },
-  cryo:    { key:'cryo',    name:'Крио-тян',    cost:70,  range:130, fireRate:800,  damage:6,  color:0x8fd6ef, proj:0xd8f4ff, splash:0,  element:'cryo' },
-  bomber:  { key:'bomber',  name:'Бомбер-тян',  cost:100, range:170, fireRate:1200, damage:15, color:0xffb877, proj:0xffe3c2, splash:70, element:'pyro' },
-  hydro:   { key:'hydro',   name:'Гидро-тян',   cost:60,  range:140, fireRate:650,  damage:8,  color:0x7ec8ff, proj:0xd2ecff, splash:0,  element:'hydro' },
-  electro: { key:'electro', name:'Электро-тян', cost:90,  range:150, fireRate:700,  damage:9,  color:0xc9aaf5, proj:0xe8dbff, splash:0,  element:'electro' },
+  blade:   { key:'blade',   name:'Клинок-тян',  cost:50,  range:140, fireRate:650,  damage:11, color:0xff8fae, proj:0xffd6e2, splash:0,  element:null },
+  cryo:    { key:'cryo',    name:'Крио-тян',    cost:70,  range:120, fireRate:1050, damage:6,  color:0x8fd6ef, proj:0xd8f4ff, splash:0,  element:'cryo' },
+  bomber:  { key:'bomber',  name:'Бомбер-тян',  cost:100, range:190, fireRate:1700, damage:16, color:0xffb877, proj:0xffe3c2, splash:70, element:'pyro' },
+  hydro:   { key:'hydro',   name:'Гидро-тян',   cost:60,  range:150, fireRate:900,  damage:9,  color:0x7ec8ff, proj:0xd2ecff, splash:0,  element:'hydro' },
+  electro: { key:'electro', name:'Электро-тян', cost:90,  range:170, fireRate:950,  damage:10, color:0xc9aaf5, proj:0xe8dbff, splash:0,  element:'electro' },
 };
 
 const TOWER_MAX_HP = 150;
 
 const ENEMY_TYPES = {
   grunt:    { name:'Марионетка', hpMult:1,    speedMult:1,    reward:1,   livesCost:1, color:0xa87fd9, ring:0xd9c2f0, radius:14 },
-  runner:   { name:'Рывок',      hpMult:0.5,  speedMult:1.8,  reward:0.8, livesCost:1, color:0xe86fa0, ring:0xffc2dc, radius:11 },
-  shielded: { name:'Щитовик',    hpMult:0.5,  speedMult:0.75, reward:1.6, livesCost:2, color:0x7a5fb8, ring:0xb8a8dc, radius:18, hasShield:true },
-  wrecker:  { name:'Крушитель',  hpMult:1.3,  speedMult:0.85, reward:1.7, livesCost:1, color:0xe85f52, ring:0xffb0a8, radius:15, attacksTowers:true, attackDamage:10, attackRate:900 },
+  runner:   { name:'Рывок',      hpMult:0.5,  speedMult:1.7,  reward:0.8, livesCost:1, color:0xe86fa0, ring:0xffc2dc, radius:11 },
+  shielded: { name:'Щитовик',    hpMult:0.5,  speedMult:0.7,  reward:1.6, livesCost:2, color:0x7a5fb8, ring:0xb8a8dc, radius:18, hasShield:true },
+  wrecker:  { name:'Крушитель',  hpMult:1.3,  speedMult:0.8,  reward:1.7, livesCost:1, color:0xe85f52, ring:0xffb0a8, radius:15, attacksTowers:true, attackDamage:10, attackRate:900 },
+};
+
+const TOWER_MILESTONES = {
+  blade: [
+    { lvl:5,  name:'Боевой инстинкт',   desc:'+8% урона всем башням',            apply:s=>{ s.mult.damage *= 1.08; } },
+    { lvl:10, name:'Быстрые руки',      desc:'+8% скорострельности всем башням', apply:s=>{ s.mult.fireRate *= 1.08; } },
+    { lvl:15, name:'Смертельная точность', desc:'+10% урона всем башням',        apply:s=>{ s.mult.damage *= 1.10; } },
+    { lvl:20, name:'Клинок судьбы',     desc:'+15% скорострельности всем башням', apply:s=>{ s.mult.fireRate *= 1.15; } },
+  ],
+  cryo: [
+    { lvl:5,  name:'Ледяное дыхание', desc:'КД заморозки -20%',                    apply:s=>{ s.mult.freezeCooldown *= 0.8; } },
+    { lvl:10, name:'Вечная мерзлота', desc:'Стихийные статусы держатся +25% дольше', apply:s=>{ s.mult.statusDuration *= 1.25; } },
+    { lvl:15, name:'Ледяной шторм',   desc:'Радиус взрывных реакций +20%',          apply:s=>{ s.mult.reactionRadius *= 1.2; } },
+    { lvl:20, name:'Абсолютный ноль', desc:'КД заморозки ещё -20%',                 apply:s=>{ s.mult.freezeCooldown *= 0.8; } },
+  ],
+  bomber: [
+    { lvl:5,  name:'Больше пороха',    desc:'Радиус сплэша всех бомберов +20%', apply:s=>{ s.mult.splash *= 1.2; } },
+    { lvl:10, name:'Термитная смесь',  desc:'Урон реакций +15%',                apply:s=>{ s.mult.reactionDamage *= 1.15; } },
+    { lvl:15, name:'Цепная реакция',   desc:'Радиус взрывных реакций +20%',     apply:s=>{ s.mult.reactionRadius *= 1.2; } },
+    { lvl:20, name:'Огненный шторм',   desc:'Урон реакций ещё +20%',            apply:s=>{ s.mult.reactionDamage *= 1.2; } },
+  ],
+  hydro: [
+    { lvl:5,  name:'Течение',          desc:'КД реакций -15%',                       apply:s=>{ s.mult.reactionCooldown *= 0.85; } },
+    { lvl:10, name:'Насыщенная влага', desc:'Стихийные статусы держатся +25% дольше', apply:s=>{ s.mult.statusDuration *= 1.25; } },
+    { lvl:15, name:'Золотой поток',    desc:'+10% золота',                           apply:s=>{ s.mult.gold *= 1.1; } },
+    { lvl:20, name:'Прилив',           desc:'КД реакций ещё -15%',                    apply:s=>{ s.mult.reactionCooldown *= 0.85; } },
+  ],
+  electro: [
+    { lvl:5,  name:'Разряд',            desc:'+8% скорострельности всем башням', apply:s=>{ s.mult.fireRate *= 1.08; } },
+    { lvl:10, name:'Высокое напряжение', desc:'Урон реакций +15%',               apply:s=>{ s.mult.reactionDamage *= 1.15; } },
+    { lvl:15, name:'Электросеть',       desc:'Радиус взрывных реакций +20%',     apply:s=>{ s.mult.reactionRadius *= 1.2; } },
+    { lvl:20, name:'Шторм молний',      desc:'+15% дальности всем башням',       apply:s=>{ s.mult.range *= 1.15; } },
+  ],
 };
 
 const UI_LAYOUT = {
@@ -141,27 +149,20 @@ function generatePath() {
   let row = Phaser.Math.Between(2, ROWS - 3);
   path.push({ x: -40, y: rowY(row) });
   path.push({ x: colX(col), y: rowY(row) });
-
   while (col < COLS - 1) {
     const runLen = Phaser.Math.Between(2, 4);
     col = Math.min(COLS - 1, col + runLen);
     path.push({ x: colX(col), y: rowY(row) });
     if (col >= COLS - 1) break;
-
     const dir = Phaser.Math.Between(0, 1) === 0 ? -1 : 1;
     const newRow = Phaser.Math.Clamp(row + dir * Phaser.Math.Between(1, 3), 1, ROWS - 2);
-    if (newRow !== row) {
-      row = newRow;
-      path.push({ x: colX(col), y: rowY(row) });
-    }
+    if (newRow !== row) { row = newRow; path.push({ x: colX(col), y: rowY(row) }); }
   }
   path.push({ x: PLAY_W + 40, y: rowY(row) });
   return path;
 }
 
-function isTransitionWave(waveNum) {
-  return waveNum > 1 && (waveNum - 1) % WAVES_PER_LEVEL === 0;
-}
+function isTransitionWave(waveNum) { return waveNum > 1 && (waveNum - 1) % WAVES_PER_LEVEL === 0; }
 
 function pointSegDist(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay;
@@ -172,16 +173,18 @@ function pointSegDist(px, py, ax, ay, bx, by) {
   return Math.hypot(px - cx, py - cy);
 }
 
+function themeAffectedElements(theme) {
+  const set = new Set();
+  theme.reactionKeys.forEach(key => key.split('_').forEach(el => set.add(el)));
+  return [...set];
+}
+
 class TDScene extends Phaser.Scene {
   preload() {
     this.missingKeys = new Set();
     this.load.on('loaderror', file => this.missingKeys.add(file.key));
-    Object.entries(ASSET_MANIFEST).forEach(([group, entries]) => {
-      Object.entries(entries).forEach(([name, path]) => this.load.image(group + '_' + name, path));
-    });
-    Object.entries(ICON_MANIFEST).forEach(([group, entries]) => {
-      Object.entries(entries).forEach(([name, path]) => this.load.image('icon_' + group + '_' + name, path));
-    });
+    Object.entries(ASSET_MANIFEST).forEach(([group, entries]) => Object.entries(entries).forEach(([name, path]) => this.load.image(group + '_' + name, path)));
+    Object.entries(ICON_MANIFEST).forEach(([group, entries]) => Object.entries(entries).forEach(([name, path]) => this.load.image('icon_' + group + '_' + name, path)));
   }
 
   create() {
@@ -195,14 +198,18 @@ class TDScene extends Phaser.Scene {
     this.waveInProgress = false;
     this.spawnQueueList = [];
     this.spawnCooldown = 0;
-    this.spawnInterval = 650;
+    this.spawnInterval = 750;
     this.nextWaveCountdown = 4000;
     this.levelTransitionDone = false;
     this.awaitingPerkChoice = false;
     this.gameOver = false;
     this.sellMode = false;
+    this.dragState = null;
 
-    this.mult = { damage:1, gold:1, fireRate:1, towerHpBonus:0, cost:1, enemyCount:1, enemyHp:1 };
+    this.mult = {
+      damage: 1, gold: 1, fireRate: 1, towerHpBonus: 0, cost: 1, enemyCount: 1, enemyHp: 1,
+      range: 1, splash: 1, reactionDamage: 1, reactionRadius: 1, freezeCooldown: 1, reactionCooldown: 1, statusDuration: 1,
+    };
 
     this.towers = [];
     this.enemies = [];
@@ -223,21 +230,55 @@ class TDScene extends Phaser.Scene {
     this.rangePreview = this.add.circle(0, 0, 0, 0x8a6fd6, 0.10).setStrokeStyle(1, 0x8a6fd6, 0.5).setVisible(false);
 
     this.input.on('pointermove', pointer => {
+      if (this.dragState) {
+        const dist = Phaser.Math.Distance.Between(this.dragState.startX, this.dragState.startY, pointer.x, pointer.y);
+        if (!this.dragState.ghost && dist > DRAG_THRESHOLD) {
+          this.dragState.ghost = this.add.image(pointer.x, pointer.y, 'characters_' + this.dragState.key).setDisplaySize(46, 46).setAlpha(0.8).setDepth(2000);
+          this.selectedType = this.dragState.key;
+          this.refreshButtonHighlight();
+        }
+        if (this.dragState.ghost) this.dragState.ghost.setPosition(pointer.x, pointer.y);
+      }
       if (this.selectedType && !this.sellMode && pointer.y < PLAY_H) {
         const t = TOWER_TYPES[this.selectedType];
-        this.rangePreview.setPosition(pointer.x, pointer.y).setRadius(t.range).setVisible(true);
+        this.rangePreview.setPosition(pointer.x, pointer.y).setRadius(this.effectiveRange(t, 1)).setVisible(true);
       } else {
         this.rangePreview.setVisible(false);
       }
     });
 
+    this.input.on('pointerup', pointer => {
+      if (!this.dragState) return;
+      const { key, ghost, wasSelected } = this.dragState;
+      const wasDragging = !!ghost;
+      if (ghost) ghost.destroy();
+      this.dragState = null;
+      if (this.gameOver || this.awaitingPerkChoice) { this.selectedType = null; this.refreshButtonHighlight(); return; }
+
+      if (wasDragging) {
+        if (pointer.y < PLAY_H) {
+          const col = Math.floor(pointer.x / TILE), row = Math.floor(pointer.y / TILE);
+          if (col >= 0 && col < COLS && row >= 0 && row < ROWS) {
+            if (this.occupied[row][col]) this.tryUpgradeTower(row, col);
+            else this.tryPlaceTower(row, col);
+          }
+        }
+        this.selectedType = null;
+        this.refreshButtonHighlight();
+      } else {
+        this.selectedType = wasSelected ? null : key;
+        this.refreshButtonHighlight();
+      }
+    });
+
     this.input.on('pointerdown', pointer => {
       if (pointer.y >= PLAY_H) return;
-      if (this.gameOver || this.awaitingPerkChoice) return;
+      if (this.gameOver || this.awaitingPerkChoice || this.dragState) return;
       const col = Math.floor(pointer.x / TILE);
       const row = Math.floor(pointer.y / TILE);
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
       if (this.sellMode) { this.trySellTower(row, col); return; }
+      if (this.occupied[row][col]) { this.tryUpgradeTower(row, col); return; }
       this.tryPlaceTower(row, col);
     });
   }
@@ -249,22 +290,17 @@ class TDScene extends Phaser.Scene {
 
   addIcon(x, y, category, name, emojiFallback, size) {
     const key = 'icon_' + category + '_' + name;
-    if (this.textures.exists(key) && !this.missingKeys.has(key)) {
-      return this.add.image(x, y, key).setDisplaySize(size, size);
-    }
+    if (this.textures.exists(key) && !this.missingKeys.has(key)) return this.add.image(x, y, key).setDisplaySize(size, size);
     return this.txt(x, y, emojiFallback, { fontSize: Math.round(size * 0.85) + 'px' }).setOrigin(0.5);
   }
 
-  needsPlaceholder(key) {
-    return !this.textures.exists(key) || this.missingKeys.has(key);
-  }
+  needsPlaceholder(key) { return !this.textures.exists(key) || this.missingKeys.has(key); }
 
   buildPlaceholderTextures() {
     const makeTile = (key, color) => {
       if (!this.needsPlaceholder(key)) return;
       const g = this.add.graphics();
       g.fillStyle(color, 1).fillRect(0, 0, TILE, TILE);
-      g.lineStyle(1, 0x000000, 0.08).strokeRect(0, 0, TILE, TILE);
       g.generateTexture(key, TILE, TILE);
       g.destroy();
     };
@@ -285,11 +321,49 @@ class TDScene extends Phaser.Scene {
       g.generateTexture(key, size, size);
       g.destroy();
     };
+    const makeEdgeMask = (key, side) => {
+      if (!this.needsPlaceholder(key)) return;
+      const g = this.add.graphics();
+      const fade = TILE * 0.7;
+      const steps = 36;
+      for (let i = 0; i < steps; i++) {
+        const d0 = (i / steps) * fade, d1 = ((i + 1) / steps) * fade;
+        const alpha = Math.pow(1 - i / (steps - 1), 1.4);
+        const size = d1 - d0 + 1;
+        let rx, ry, rw, rh;
+        if (side === 'bottom') { rw = TILE; rh = size; rx = 0; ry = TILE - d1; }
+        else if (side === 'top') { rw = TILE; rh = size; rx = 0; ry = d0; }
+        else if (side === 'left') { rh = TILE; rw = size; rx = d0; ry = 0; }
+        else { rh = TILE; rw = size; rx = TILE - d1; ry = 0; }
+        g.fillStyle(0xffffff, alpha).fillRect(rx, ry, rw, rh);
+      }
+      g.generateTexture(key, TILE, TILE);
+      g.destroy();
+    };
+    const makeCornerMask = (key, corner) => {
+      if (!this.needsPlaceholder(key)) return;
+      const g = this.add.graphics();
+      const cx = corner.includes('l') ? 0 : TILE;
+      const cy = corner.includes('t') ? 0 : TILE;
+      const maxR = TILE * 0.72;
+      const steps = 40;
+      for (let i = 0; i < steps; i++) {
+        const r0 = (i / steps) * maxR, r1 = ((i + 1) / steps) * maxR;
+        const rMid = (r0 + r1) / 2;
+        const thickness = r1 - r0 + 1.5;
+        const alpha = Math.pow(1 - i / (steps - 1), 1.4);
+        g.lineStyle(thickness, 0xffffff, alpha);
+        g.strokeCircle(cx, cy, rMid);
+      }
+      g.generateTexture(key, TILE, TILE);
+      g.destroy();
+    };
 
     makeTile('tiles_border', PALETTE.tileBorder);
     makeTile('tiles_grass', PALETTE.tileGrass);
     makeTile('tiles_forest', PALETTE.tileForest);
-
+    ['top', 'right', 'bottom', 'left'].forEach(side => makeEdgeMask('masks_edge_' + side, side));
+    ['tl', 'tr', 'bl', 'br'].forEach(corner => makeCornerMask('masks_corner_' + corner, corner));
     Object.keys(TOWER_TYPES).forEach(key => makeSquare('characters_' + key, TOWER_TYPES[key].color, 46));
     Object.keys(ENEMY_TYPES).forEach(key => makeCircle('mobs_' + key, ENEMY_TYPES[key].color, ENEMY_TYPES[key].ring, ENEMY_TYPES[key].radius * 2));
   }
@@ -301,34 +375,80 @@ class TDScene extends Phaser.Scene {
       const d = pointSegDist(cx, cy, this.PATH[i].x, this.PATH[i].y, this.PATH[i + 1].x, this.PATH[i + 1].y);
       if (d < minDist) minDist = d;
     }
-    if (minDist < ZONE_PATH_MAX) return { buildable: false, tex: 'grass' };
-    if (minDist < ZONE_BORDER_MAX) return { buildable: true, tex: 'border' };
-    if (minDist < ZONE_GRASS_MAX) return { buildable: false, tex: 'grass' };
-    return { buildable: false, tex: 'forest' };
+    if (minDist < ZONE_PATH_MAX) return { buildable: false, tier: TIER_GRASS };
+    if (minDist < ZONE_BORDER_MAX) return { buildable: true, tier: TIER_BORDER };
+    if (minDist < ZONE_GRASS_MAX) return { buildable: false, tier: TIER_GRASS };
+    return { buildable: false, tier: TIER_FOREST };
   }
 
   recomputeBuildable() {
     this.buildable = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
-    this.tileTex = Array.from({ length: ROWS }, () => Array(COLS).fill('forest'));
+    this.tileTier = Array.from({ length: ROWS }, () => Array(COLS).fill(TIER_FOREST));
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         const zone = this.zoneAt(r, c);
         this.buildable[r][c] = zone.buildable;
-        this.tileTex[r][c] = zone.tex;
+        this.tileTier[r][c] = zone.tier;
       }
     }
     this.occupied = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
   }
 
+  tierAt(r, c, fallback) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return fallback;
+    return this.tileTier[r][c];
+  }
+
   drawLevelBackground() {
     this.tileImages.forEach(img => img.destroy());
     this.tileImages = [];
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        const img = this.add.image(colX(c), rowY(r), 'tiles_' + this.tileTex[r][c]).setDisplaySize(TILE, TILE).setDepth(-100);
-        this.tileImages.push(img);
+
+    const rt = this.add.renderTexture(0, 0, PLAY_W, PLAY_H).setOrigin(0, 0).setDepth(-100);
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) rt.draw('tiles_forest', c * TILE, r * TILE);
+
+    const EDGE = { top: [-1, 0], right: [0, 1], bottom: [1, 0], left: [0, -1] };
+    const CORNER = {
+      tl: { d: [-1, -1], adj: ['top', 'left'] }, tr: { d: [-1, 1], adj: ['top', 'right'] },
+      bl: { d: [1, -1], adj: ['bottom', 'left'] }, br: { d: [1, 1], adj: ['bottom', 'right'] },
+    };
+
+    const paintLayer = (rank, texKey) => {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const tier = this.tileTier[r][c];
+          const active = rank === 1 ? tier <= TIER_GRASS : tier === TIER_BORDER;
+          if (!active) continue;
+          const x = c * TILE, y = r * TILE;
+          rt.draw(texKey, x, y);
+          const sameAsRank = (rr, cc, fb) => { const t = this.tierAt(rr, cc, fb); return rank === 2 ? t === TIER_BORDER : t <= TIER_GRASS; };
+          const edgeDiffers = {};
+          Object.entries(EDGE).forEach(([side, [dr, dc]]) => {
+            const differs = !sameAsRank(r + dr, c + dc, rank === 2 ? TIER_BORDER : TIER_GRASS);
+            edgeDiffers[side] = differs;
+            if (differs) rt.erase('masks_edge_' + side, x, y);
+          });
+          Object.entries(CORNER).forEach(([corner, info]) => {
+            const [dr, dc] = info.d;
+            if (!info.adj.every(side => !edgeDiffers[side])) return;
+            const diagDiffers = !sameAsRank(r + dr, c + dc, rank === 2 ? TIER_BORDER : TIER_GRASS);
+            if (diagDiffers) rt.erase('masks_corner_' + corner, x, y);
+          });
+        }
       }
+    };
+    paintLayer(1, 'tiles_grass');
+    paintLayer(2, 'tiles_border');
+    this.tileImages.push(rt);
+
+    const vignette = this.add.graphics().setDepth(-60);
+    const vSteps = 18;
+    for (let i = 0; i < vSteps; i++) {
+      const t = i / (vSteps - 1);
+      const inset = t * 46;
+      vignette.lineStyle(4, 0x5a3f7a, 0.028 * (1 - t)).strokeRect(inset, inset, PLAY_W - inset * 2, PLAY_H - inset * 2);
     }
+    this.tileImages.push(vignette);
+
     const g = this.add.graphics().setDepth(-50);
     g.lineStyle(9, PALETTE.pathFill, 0.9);
     for (let i = 0; i < this.PATH.length - 1; i++) g.lineBetween(this.PATH[i].x, this.PATH[i].y, this.PATH[i + 1].x, this.PATH[i + 1].y);
@@ -339,35 +459,117 @@ class TDScene extends Phaser.Scene {
 
   drawStaticUI() {
     const g2 = this.add.graphics();
-    g2.fillStyle(PALETTE.hudBg, 1).fillRect(0, PLAY_H, WIDTH, UI_H);
-    g2.lineStyle(2, PALETTE.panelStroke, 1).lineBetween(0, PLAY_H, WIDTH, PLAY_H);
+    g2.fillGradientStyle(0xfffaf5, 0xfffaf5, PALETTE.hudBg, PALETTE.hudBg, 1);
+    g2.fillRect(0, PLAY_H, WIDTH, UI_H);
+    g2.fillStyle(PALETTE.accentA, 0.4).fillRect(0, PLAY_H, WIDTH, 3);
+    g2.lineStyle(2, PALETTE.panelStroke, 1).lineBetween(0, PLAY_H + 3, WIDTH, PLAY_H + 3);
   }
 
   drawTopHud() {
-    const g = this.add.graphics();
-    g.fillStyle(0xffffff, 0.75).fillRect(0, 0, PLAY_W, 36);
-    const style = { fontFamily: 'Arial', fontSize: '17px', color: PALETTE.textDark };
-    this.goldText = this.txt(14, 6, '', style);
-    this.livesText = this.txt(230, 6, '', style);
-    this.waveText = this.txt(400, 6, '', style);
-    this.levelText = this.txt(600, 6, '', style);
-    this.themeBuffText = this.txt(790, 7, '', { fontFamily: 'Arial', fontSize: '14px', color: PALETTE.textAccent });
+    const HUD_DEPTH = 300;
+    const chipY = 10, chipH = HUD_H - 20;
+    const chips = [
+      { key: 'gold', x: 16, w: 118 },
+      { key: 'lives', x: 146, w: 104 },
+      { key: 'wave', x: 262, w: 104 },
+      { key: 'level', x: 378, w: 104 },
+      { key: 'towers', x: 940, w: 164 },
+    ];
+    this.tooltipContent = {
+      gold: 'Золото — трать на новые башни и их прокачку.',
+      lives: 'Жизни. Если эфириал доходит до конца пути — теряется жизнь. 0 жизней = поражение.',
+      wave: 'Текущая волна врагов в этом уровне (всего ' + WAVES_PER_LEVEL + ' волн на уровень).',
+      level: 'Номер уровня. Каждые ' + WAVES_PER_LEVEL + ' волн карта меняется и можно выбрать улучшение.',
+      towers: 'Сколько башен построено. Лимит на поле: ' + MAX_TOWERS + '.',
+    };
+
+    const bg = this.add.graphics().setDepth(HUD_DEPTH);
+    bg.fillGradientStyle(PALETTE.hudBgTop, PALETTE.hudBgTop, 0xffffff, 0xffffff, 0.96);
+    bg.fillRect(0, 0, PLAY_W, HUD_H);
+    bg.fillStyle(PALETTE.accentA, 0.35).fillRect(0, HUD_H - 3, PLAY_W, 3);
+    bg.fillStyle(0x000000, 0.05).fillRect(0, HUD_H, PLAY_W, 3);
+
+    this.hudTexts = {};
+    chips.forEach(chip => {
+      const g = this.add.graphics().setDepth(HUD_DEPTH);
+      this.panelShadow(g, chip.x, chipY, chip.w, chipH, 12);
+      g.fillStyle(0xf6f0fb, 1).fillRoundedRect(chip.x, chipY, chip.w, chipH, 12);
+      g.lineStyle(1.5, PALETTE.panelStroke, 1).strokeRoundedRect(chip.x, chipY, chip.w, chipH, 12);
+      this.hudTexts[chip.key] = this.txt(chip.x + 14, chipY + chipH / 2, '', { fontFamily: 'Arial', fontSize: '17px', color: PALETTE.textDark }).setOrigin(0, 0.5).setDepth(HUD_DEPTH + 1);
+      const zone = this.add.zone(chip.x, chipY, chip.w, chipH).setOrigin(0, 0).setInteractive({ useHandCursor: true }).setDepth(HUD_DEPTH + 2);
+      zone.on('pointerover', () => this.showTooltip(chip.x + chip.w / 2, chipY + chipH + 8, this.tooltipContent[chip.key]));
+      zone.on('pointerout', () => this.hideTooltip());
+    });
+
+    this.themeChipX = 500; this.themeChipY = chipY; this.themeChipW = 420; this.themeChipH = chipH;
+    this.themeChipGfx = this.add.graphics().setDepth(HUD_DEPTH);
+    this.themeBuffText = this.txt(this.themeChipX + 16, chipY + chipH / 2, '', { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textAccent }).setOrigin(0, 0.5).setDepth(HUD_DEPTH + 1);
+    this.themeChipZone = this.add.zone(this.themeChipX, chipY, this.themeChipW, chipH).setOrigin(0, 0).setDepth(HUD_DEPTH + 2);
+    this.themeChipZone.on('pointerover', () => {
+      if (!this.currentTheme) return;
+      this.showTooltip(this.themeChipX + this.themeChipW / 2, chipY + chipH + 8,
+        'Уровень усиливает реакцию «' + this.currentTheme.reactionName + '» (×' + this.currentTheme.buffMult + ') и увеличивает дальность башен нужной стихии.');
+    });
+    this.themeChipZone.on('pointerout', () => this.hideTooltip());
+
+    this.tooltipGfx = this.add.graphics().setDepth(HUD_DEPTH + 10).setVisible(false);
+    this.tooltipText = this.txt(0, 0, '', { fontFamily: 'Arial', fontSize: '13px', color: '#ffffff', wordWrap: { width: 260 } }).setDepth(HUD_DEPTH + 11).setVisible(false);
   }
 
-  effectiveCost(key) {
-    return Math.max(10, Math.round(TOWER_TYPES[key].cost * this.mult.cost));
+  showTooltip(cx, y, text) {
+    this.tooltipText.setText(text);
+    const w = Math.min(280, this.tooltipText.width + 24);
+    this.tooltipText.setWordWrapWidth(w - 24);
+    const h = this.tooltipText.height + 20;
+    let tx = Phaser.Math.Clamp(cx - w / 2, 8, PLAY_W - w - 8);
+    this.tooltipGfx.clear();
+    this.tooltipGfx.fillStyle(0x2a2038, 0.95).fillRoundedRect(tx, y, w, h, 10);
+    this.tooltipGfx.setVisible(true);
+    this.tooltipText.setPosition(tx + 12, y + 10).setVisible(true);
   }
 
-  refreshCostLabels() {
-    Object.keys(this.costTexts).forEach(key => this.costTexts[key].setText('💰 ' + this.effectiveCost(key)));
+  hideTooltip() { this.tooltipGfx.setVisible(false); this.tooltipText.setVisible(false); }
+
+  effectiveCost(key) { return Math.max(10, Math.round(TOWER_TYPES[key].cost * this.mult.cost)); }
+  refreshCostLabels() { Object.keys(this.costTexts).forEach(key => this.costTexts[key].setText('💰 ' + this.effectiveCost(key))); }
+
+  effectiveRange(type, level) {
+    const lvlMult = 1 + (level - 1) * 0.02;
+    const themeMult = (type.element && this.currentTheme && themeAffectedElements(this.currentTheme).includes(type.element))
+      ? 1 + (this.currentTheme.buffMult - 1) * 0.5 : 1;
+    return type.range * lvlMult * this.mult.range * themeMult;
+  }
+  upgradeCost(tower) { return Math.round(tower.type.cost * (0.5 + tower.level * 0.45)); }
+
+  panelShadow(gfx, x, y, w, h, radius) {
+    gfx.fillStyle(0x000000, 0.10).fillRoundedRect(x + 3, y + 5, w, h, radius);
+    gfx.fillStyle(0x000000, 0.06).fillRoundedRect(x + 1.5, y + 2.5, w, h, radius);
   }
 
   drawCardPanel(gfx, x, y, w, h, highlighted) {
     gfx.clear();
-    gfx.fillStyle(PALETTE.panelBg, 1);
+    this.panelShadow(gfx, x, y, w, h, 14);
+    if (highlighted) {
+      gfx.fillGradientStyle(0xfff3e4, 0xfff3e4, 0xffe2c2, 0xffe2c2, 1);
+    } else {
+      gfx.fillGradientStyle(PALETTE.panelBgTop, PALETTE.panelBgTop, PALETTE.panelBg, PALETTE.panelBg, 1);
+    }
     gfx.fillRoundedRect(x, y, w, h, 14);
-    gfx.lineStyle(2, highlighted ? PALETTE.panelStrokeSelected : PALETTE.panelStroke, 1);
-    gfx.strokeRoundedRect(x, y, w, h, 14);
+    gfx.lineStyle(highlighted ? 2.5 : 2, highlighted ? PALETTE.panelStrokeSelected : PALETTE.panelStroke, 1).strokeRoundedRect(x, y, w, h, 14);
+    if (highlighted) gfx.lineStyle(6, PALETTE.panelStrokeSelected, 0.18).strokeRoundedRect(x - 2, y - 2, w + 4, h + 4, 16);
+    gfx.fillStyle(0xffffff, 0.45).fillRoundedRect(x + 3, y + 3, w - 6, Math.min(h * 0.32, 26), 10);
+  }
+
+  drawSellPanel(active) {
+    const gfx = this.sellGfx;
+    const { sellBtnX: x, sellBtnY: y, sellBtnW: w, sellBtnH: h } = UI_LAYOUT;
+    gfx.clear();
+    this.panelShadow(gfx, x, y, w, h, 14);
+    if (active) gfx.fillGradientStyle(0xffe4e0, 0xffe4e0, 0xffd0ca, 0xffd0ca, 1);
+    else gfx.fillGradientStyle(PALETTE.panelBgTop, PALETTE.panelBgTop, PALETTE.panelBg, PALETTE.panelBg, 1);
+    gfx.fillRoundedRect(x, y, w, h, 14);
+    gfx.lineStyle(active ? 2.5 : 2, active ? 0xe0665a : PALETTE.panelStroke, 1).strokeRoundedRect(x, y, w, h, 14);
+    gfx.fillStyle(0xffffff, 0.45).fillRoundedRect(x + 3, y + 3, w - 6, Math.min(h * 0.32, 26), 10);
   }
 
   drawBottomUI() {
@@ -388,18 +590,19 @@ class TDScene extends Phaser.Scene {
       this.txt(bx + bw / 2, by + 56, t.name, { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textDark }).setOrigin(0.5, 0);
       this.costTexts[key] = this.txt(bx + bw / 2, by + 80, '💰 ' + this.effectiveCost(key), { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textAccent }).setOrigin(0.5, 0);
 
-      zone.on('pointerdown', () => {
+      zone.on('pointerdown', pointer => {
         if (this.awaitingPerkChoice) return;
         this.sellMode = false;
-        this.drawCardPanel(this.sellGfx, UI_LAYOUT.sellBtnX, UI_LAYOUT.sellBtnY, UI_LAYOUT.sellBtnW, UI_LAYOUT.sellBtnH, false);
-        this.selectedType = (this.selectedType === key) ? null : key;
-        this.refreshButtonHighlight();
+        this.drawSellPanel(false);
+        this.dragState = { key, startX: pointer.x, startY: pointer.y, wasSelected: this.selectedType === key, ghost: null };
       });
+      zone.on('pointerover', () => { if (this.selectedType !== key) { this.drawCardPanel(gfx, bx, by, bw, bh, false); gfx.lineStyle(2, PALETTE.accentA, 0.9).strokeRoundedRect(bx, by, bw, bh, 14); } });
+      zone.on('pointerout', () => this.refreshButtonHighlight());
       this.towerButtons[key] = gfx;
     });
 
     this.sellGfx = this.add.graphics();
-    this.drawCardPanel(this.sellGfx, UI_LAYOUT.sellBtnX, UI_LAYOUT.sellBtnY, UI_LAYOUT.sellBtnW, UI_LAYOUT.sellBtnH, false);
+    this.drawSellPanel(false);
     const sellZone = this.add.zone(UI_LAYOUT.sellBtnX, UI_LAYOUT.sellBtnY, UI_LAYOUT.sellBtnW, UI_LAYOUT.sellBtnH).setOrigin(0, 0).setInteractive({ useHandCursor: true });
     this.addIcon(UI_LAYOUT.sellBtnX + 26, UI_LAYOUT.sellBtnY + 32, 'ui', 'sell', '🗑', 30);
     this.txt(UI_LAYOUT.sellBtnX + 12, UI_LAYOUT.sellBtnY + 66, 'Продать\n(60%)', { fontFamily: 'Arial', fontSize: '12px', color: PALETTE.textDark });
@@ -407,13 +610,16 @@ class TDScene extends Phaser.Scene {
       if (this.awaitingPerkChoice) return;
       this.sellMode = !this.sellMode;
       if (this.sellMode) { this.selectedType = null; this.refreshButtonHighlight(); }
-      this.drawCardPanel(this.sellGfx, UI_LAYOUT.sellBtnX, UI_LAYOUT.sellBtnY, UI_LAYOUT.sellBtnW, UI_LAYOUT.sellBtnH, this.sellMode);
+      this.drawSellPanel(this.sellMode);
     });
 
     const wbx = UI_LAYOUT.waveBtnX, wby = UI_LAYOUT.waveBtnY - UI_LAYOUT.waveBtnH / 2;
     this.waveGfx = this.add.graphics();
-    this.waveGfx.fillStyle(0xe4d8f7, 1).fillRoundedRect(wbx, wby, UI_LAYOUT.waveBtnW, UI_LAYOUT.waveBtnH, 16);
+    this.panelShadow(this.waveGfx, wbx, wby, UI_LAYOUT.waveBtnW, UI_LAYOUT.waveBtnH, 16);
+    this.waveGfx.fillGradientStyle(0xe9dffa, 0xe9dffa, 0xd8c4f2, 0xd8c4f2, 1);
+    this.waveGfx.fillRoundedRect(wbx, wby, UI_LAYOUT.waveBtnW, UI_LAYOUT.waveBtnH, 16);
     this.waveGfx.lineStyle(2, 0xb79ae0, 1).strokeRoundedRect(wbx, wby, UI_LAYOUT.waveBtnW, UI_LAYOUT.waveBtnH, 16);
+    this.waveGfx.fillStyle(0xffffff, 0.45).fillRoundedRect(wbx + 3, wby + 3, UI_LAYOUT.waveBtnW - 6, 12, 10);
     const waveZone = this.add.zone(wbx, wby, UI_LAYOUT.waveBtnW, UI_LAYOUT.waveBtnH).setOrigin(0, 0).setInteractive({ useHandCursor: true });
     this.waveButtonText = this.txt(UI_LAYOUT.waveBtnX + UI_LAYOUT.waveBtnW / 2, UI_LAYOUT.waveBtnY, '', { fontFamily: 'Arial', fontSize: '16px', color: PALETTE.textDark }).setOrigin(0.5);
     waveZone.on('pointerdown', () => { if (!this.waveInProgress && !this.awaitingPerkChoice) this.startWave(); });
@@ -430,11 +636,44 @@ class TDScene extends Phaser.Scene {
   }
 
   updateUIText() {
-    this.goldText.setText('💰 ' + this.gold);
-    this.livesText.setText('❤ ' + this.lives);
-    this.waveText.setText('🌊 ' + this.wave);
-    this.levelText.setText('🗺 Ур.' + this.level);
-    this.themeBuffText.setText(this.currentTheme ? (this.currentTheme.icon + ' ' + this.currentTheme.reactionName + ' ×' + this.currentTheme.buffMult) : '');
+    this.hudTexts.gold.setText('💰 ' + this.gold);
+    this.hudTexts.lives.setText('❤ ' + this.lives);
+    this.hudTexts.wave.setText('🌊 ' + this.wave);
+    this.hudTexts.level.setText('🗺 Ур.' + this.level);
+    this.hudTexts.towers.setText('🏗 Башни: ' + this.towers.length + '/' + MAX_TOWERS);
+    if (this.currentTheme) {
+      this.themeBuffText.setText(this.currentTheme.icon + ' ' + this.currentTheme.reactionName + ' ×' + this.currentTheme.buffMult);
+      this.themeChipGfx.clear();
+      this.panelShadow(this.themeChipGfx, this.themeChipX, this.themeChipY, this.themeChipW, this.themeChipH, 12);
+      this.themeChipGfx.fillStyle(0xfff3e0, 1).fillRoundedRect(this.themeChipX, this.themeChipY, this.themeChipW, this.themeChipH, 12);
+      this.themeChipGfx.lineStyle(1.5, 0xf0c98a, 1).strokeRoundedRect(this.themeChipX, this.themeChipY, this.themeChipW, this.themeChipH, 12);
+      this.themeChipZone.setInteractive({ useHandCursor: true });
+    } else {
+      this.themeBuffText.setText('');
+      this.themeChipGfx.clear();
+      this.themeChipZone.disableInteractive();
+    }
+    if (this.towers) this.towers.forEach(t => this.refreshUpgradeBadge(t));
+  }
+
+  createUpgradeBadge(tower) {
+    tower.upgBg = this.add.graphics();
+    tower.upgLabel = this.txt(0, 0, '', { fontFamily: 'Arial', fontSize: '11px', color: '#ffffff', padding: { top: 1, bottom: 1, left: 2, right: 2 } }).setOrigin(0.5);
+    this.refreshUpgradeBadge(tower);
+  }
+
+  refreshUpgradeBadge(tower) {
+    if (!tower.upgBg) return;
+    const bx = tower.x + 16, by = tower.y - 28;
+    const w = 34, h = 18;
+    const maxed = tower.level >= TOWER_MAX_LEVEL;
+    const cost = maxed ? 0 : this.upgradeCost(tower);
+    const affordable = !maxed && this.gold >= cost;
+    tower.upgBg.clear();
+    tower.upgBg.fillStyle(maxed ? 0xbfb3d6 : (affordable ? 0x6fbf6f : 0xd9a8a0), 0.95);
+    tower.upgBg.fillRoundedRect(bx - w / 2, by - h / 2, w, h, 6);
+    tower.upgBg.lineStyle(1, 0xffffff, 0.85).strokeRoundedRect(bx - w / 2, by - h / 2, w, h, 6);
+    tower.upgLabel.setText(maxed ? 'MAX' : ('▲' + cost)).setPosition(bx, by);
   }
 
   showFloatText(x, y, text, color) {
@@ -443,13 +682,13 @@ class TDScene extends Phaser.Scene {
   }
 
   showBanner(title, subtitle) {
-    const t1 = this.txt(WIDTH / 2, PLAY_H / 2 - 20, title, { fontFamily: 'Arial', fontSize: '40px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(1000);
+    const t1 = this.txt(WIDTH / 2, PLAY_H / 2 - 20, title, { fontFamily: 'Arial', fontSize: '36px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(1000);
     const targets = [t1];
     if (subtitle) {
-      const t2 = this.txt(WIDTH / 2, PLAY_H / 2 + 34, subtitle, { fontFamily: 'Arial', fontSize: '18px', color: PALETTE.textDark, align: 'center', wordWrap: { width: PLAY_W - 160 } }).setOrigin(0.5).setDepth(1000);
+      const t2 = this.txt(WIDTH / 2, PLAY_H / 2 + 30, subtitle, { fontFamily: 'Arial', fontSize: '16px', color: PALETTE.textDark, align: 'center', wordWrap: { width: PLAY_W - 160 } }).setOrigin(0.5).setDepth(1000);
       targets.push(t2);
     }
-    this.tweens.add({ targets, alpha: { from: 1, to: 0 }, delay: 1500, duration: 900, onComplete: () => targets.forEach(t => t.destroy()) });
+    this.tweens.add({ targets, alpha: { from: 1, to: 0 }, delay: 1700, duration: 900, onComplete: () => targets.forEach(t => t.destroy()) });
   }
 
   openModalWindow(w, h, depthBase) {
@@ -458,6 +697,8 @@ class TDScene extends Phaser.Scene {
     overlay.push(dim);
     const x = WIDTH / 2 - w / 2, y = PLAY_H / 2 - h / 2;
     const g = this.add.graphics().setDepth(depthBase + 1);
+    g.fillStyle(0x000000, 0.12).fillRoundedRect(x + 5, y + 8, w, h, 22);
+    g.fillStyle(0x000000, 0.07).fillRoundedRect(x + 2, y + 3, w, h, 22);
     g.fillStyle(0xfffdfb, 1).fillRoundedRect(x, y, w, h, 22);
     g.lineStyle(3, PALETTE.panelStroke, 1).strokeRoundedRect(x, y, w, h, 22);
     overlay.push(g);
@@ -468,21 +709,19 @@ class TDScene extends Phaser.Scene {
     const modal = this.openModalWindow(760, 380, 3000);
     const { overlay, x, y, w } = modal;
     const cx = x + w / 2;
-
     const icon = this.addIcon(cx, y + 66, 'themes', theme.id, theme.icon, 56);
     const title = this.txt(cx, y + 118, 'Тематический уровень: ' + theme.name, { fontFamily: 'Arial', fontSize: '24px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(3002);
     const desc = this.txt(cx, y + 168, theme.desc, { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textDark, align: 'center', wordWrap: { width: w - 100 } }).setOrigin(0.5, 0).setDepth(3002);
-    const buff = this.txt(cx, y + 232, 'Бафф уровня: ' + theme.reactionName + ' сильнее в ' + theme.buffMult + ' раза', { fontFamily: 'Arial', fontSize: '16px', color: '#3f8fae' }).setOrigin(0.5).setDepth(3002);
+    const buff = this.txt(cx, y + 232, 'Бафф уровня: ' + theme.reactionName + ' сильнее в ' + theme.buffMult + ' раза (+дальность башням этой стихии)', { fontFamily: 'Arial', fontSize: '14px', color: '#3f8fae', align: 'center', wordWrap: { width: w - 100 } }).setOrigin(0.5, 0).setDepth(3002);
     overlay.push(icon, title, desc, buff);
 
-    const bw = 200, bh = 50, bx = cx - bw / 2, by = y + w * 0 + 280;
+    const bw = 200, bh = 50, bx = cx - bw / 2, by = y + 300;
     const btnG = this.add.graphics().setDepth(3002);
     btnG.fillStyle(0xe4d8f7, 1).fillRoundedRect(bx, by, bw, bh, 14);
     btnG.lineStyle(2, 0xb79ae0, 1).strokeRoundedRect(bx, by, bw, bh, 14);
     const btnZone = this.add.zone(bx, by, bw, bh).setOrigin(0, 0).setInteractive({ useHandCursor: true }).setDepth(3003);
     const btnText = this.txt(cx, by + bh / 2, 'Понятно', { fontFamily: 'Arial', fontSize: '17px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(3003);
     overlay.push(btnG, btnZone, btnText);
-
     btnZone.on('pointerdown', () => { overlay.forEach(o => o.destroy()); onDone(); });
   }
 
@@ -513,38 +752,67 @@ class TDScene extends Phaser.Scene {
 
       zone.on('pointerover', () => { g.clear(); g.fillStyle(0xf6f0fb, 1).fillRoundedRect(bx, cardY, cardW, cardH, 16); g.lineStyle(2, PALETTE.panelStrokeSelected, 1).strokeRoundedRect(bx, cardY, cardW, cardH, 16); });
       zone.on('pointerout', () => { g.clear(); g.fillStyle(0xf6f0fb, 1).fillRoundedRect(bx, cardY, cardW, cardH, 16); g.lineStyle(2, PALETTE.panelStroke, 1).strokeRoundedRect(bx, cardY, cardW, cardH, 16); });
-      zone.on('pointerdown', () => {
-        perk.apply(this);
-        overlay.forEach(o => o.destroy());
-        onDone();
-      });
+      zone.on('pointerdown', () => { perk.apply(this); overlay.forEach(o => o.destroy()); onDone(); });
     });
   }
 
   tryPlaceTower(row, col) {
     if (!this.selectedType) return;
     if (!this.buildable[row][col] || this.occupied[row][col]) return;
+    if (this.towers.length >= MAX_TOWERS) { this.showFloatText(colX(col), rowY(row) - 20, 'Лимит башен: ' + MAX_TOWERS, '#d9553f'); return; }
     const t = TOWER_TYPES[this.selectedType];
     const cost = this.effectiveCost(this.selectedType);
-    if (this.gold < cost) return;
+    if (this.gold < cost) { this.showFloatText(colX(col), rowY(row) - 20, 'Не хватает золота', '#d9553f'); return; }
 
     this.gold -= cost;
     this.occupied[row][col] = true;
 
     const cx = colX(col), cy = rowY(row);
+    const shadow = this.add.ellipse(cx, cy + 20, 40, 14, 0x2a1f3a, 0.16);
     const outline = this.add.rectangle(cx, cy, 46, 46, 0xffffff, 0).setStrokeStyle(2, 0xffffff, 0.9);
     const body = this.add.image(cx, cy, 'characters_' + this.selectedType).setDisplaySize(46, 46);
     const maxHp = TOWER_MAX_HP + this.mult.towerHpBonus;
     const hpBg = this.add.rectangle(cx, cy + 30, 34, 5, 0xffffff, 0.6).setOrigin(0.5);
     const hpFg = this.add.rectangle(cx - 17, cy + 30, 34, 5, 0x6fbf6f).setOrigin(0, 0.5);
-    this.towers.push({ type: t, x: cx, y: cy, row, col, lastFired: -99999, body, outline, hp: maxHp, maxHp, hpBg, hpFg });
+    const levelText = this.txt(cx, cy + 20, 'Ур.1', { fontFamily: 'Arial', fontSize: '10px', color: '#ffffff', padding: { top: 2, bottom: 2, left: 2, right: 2 } }).setOrigin(0.5).setDepth(50);
+    this.towers.push({
+      type: t, x: cx, y: cy, row, col, lastFired: -99999, body, outline, shadow, hp: maxHp, maxHp, hpBg, hpFg,
+      level: 1, levelText, milestonesApplied: new Set(),
+    });
+    this.createUpgradeBadge(this.towers[this.towers.length - 1]);
+    this.updateUIText();
+  }
+
+  tryUpgradeTower(row, col) {
+    const tower = this.towers.find(t => t.row === row && t.col === col);
+    if (!tower) return;
+    if (tower.level >= TOWER_MAX_LEVEL) { this.showFloatText(tower.x, tower.y - 30, 'Макс. уровень', PALETTE.textMuted); return; }
+    const cost = this.upgradeCost(tower);
+    if (this.gold < cost) { this.showFloatText(tower.x, tower.y - 30, 'Нужно 💰' + cost, '#d9553f'); return; }
+
+    this.gold -= cost;
+    tower.level += 1;
+    this.showFloatText(tower.x, tower.y - 30, 'Ур. ' + tower.level, '#3f8fae');
+    tower.levelText.setText('Ур.' + tower.level);
+    const scale = 1 + Math.min(0.35, (tower.level - 1) * 0.018);
+    tower.body.setDisplaySize(46 * scale, 46 * scale);
+    tower.outline.setSize(46 * scale, 46 * scale);
+
+    const milestone = (TOWER_MILESTONES[tower.type.key] || []).find(m => m.lvl === tower.level);
+    if (milestone && !tower.milestonesApplied.has(tower.level)) {
+      tower.milestonesApplied.add(tower.level);
+      milestone.apply(this);
+      this.refreshCostLabels();
+      this.showBanner(tower.type.name + ' · Ур.' + tower.level, milestone.name + ': ' + milestone.desc);
+    }
+    this.refreshUpgradeBadge(tower);
     this.updateUIText();
   }
 
   trySellTower(row, col) {
     const tower = this.towers.find(t => t.row === row && t.col === col);
     if (!tower) return;
-    const refund = Math.floor(tower.type.cost * SELL_REFUND_RATIO);
+    const refund = Math.floor(tower.type.cost * SELL_REFUND_RATIO * (1 + (tower.level - 1) * 0.15));
     this.gold += refund;
     this.showFloatText(tower.x, tower.y - 30, '+' + refund + '💰', '#c97b2e');
     this.destroyTower(tower);
@@ -552,7 +820,10 @@ class TDScene extends Phaser.Scene {
   }
 
   destroyTower(tower) {
-    tower.body.destroy(); tower.outline.destroy(); tower.hpBg.destroy(); tower.hpFg.destroy();
+    tower.body.destroy(); tower.outline.destroy(); tower.hpBg.destroy(); tower.hpFg.destroy(); tower.levelText.destroy();
+    if (tower.shadow) tower.shadow.destroy();
+    if (tower.upgBg) tower.upgBg.destroy();
+    if (tower.upgLabel) tower.upgLabel.destroy();
     this.occupied[tower.row][tower.col] = false;
     this.towers = this.towers.filter(t => t !== tower);
     for (const e of this.enemies) if (e.attackTarget === tower) e.attackTarget = null;
@@ -567,21 +838,16 @@ class TDScene extends Phaser.Scene {
     let pool = unlocked;
     if (this.currentTheme && this.currentTheme.enemyBias) {
       const biasPool = [];
-      Object.entries(this.currentTheme.enemyBias).forEach(([key, weight]) => {
-        if (unlocked.includes(key)) for (let i = 0; i < weight; i++) biasPool.push(key);
-      });
+      Object.entries(this.currentTheme.enemyBias).forEach(([key, weight]) => { if (unlocked.includes(key)) for (let i = 0; i < weight; i++) biasPool.push(key); });
       if (biasPool.length > 0) pool = biasPool;
     }
 
     const countMultTheme = (this.currentTheme && this.currentTheme.countMult) || 1;
-    const baseCount = 6 + Math.floor(wave * 1.4);
+    const baseCount = 6 + Math.floor(wave * 1.3);
     const count = Math.max(1, Math.round(baseCount * this.mult.enemyCount * countMultTheme));
 
     const list = [];
-    for (let i = 0; i < count; i++) {
-      const key = pool[Phaser.Math.Between(0, pool.length - 1)];
-      list.push({ typeKey: key, isBoss: false });
-    }
+    for (let i = 0; i < count; i++) { const key = pool[Phaser.Math.Between(0, pool.length - 1)]; list.push({ typeKey: key, isBoss: false }); }
     if (wave % WAVES_PER_LEVEL === 0) list.push({ typeKey: 'shielded', isBoss: true });
     return list;
   }
@@ -589,10 +855,7 @@ class TDScene extends Phaser.Scene {
   transitionLevel(nextWaveNum) {
     this.level = Math.ceil(nextWaveNum / WAVES_PER_LEVEL);
     let refund = 0;
-    for (const t of [...this.towers]) {
-      refund += Math.floor(t.type.cost * SELL_REFUND_RATIO);
-      this.destroyTower(t);
-    }
+    for (const t of [...this.towers]) { refund += Math.floor(t.type.cost * SELL_REFUND_RATIO); this.destroyTower(t); }
     this.gold += refund;
     this.PATH = generatePath();
     this.recomputeBuildable();
@@ -617,12 +880,7 @@ class TDScene extends Phaser.Scene {
       this.transitionLevel(nextWaveNum);
       this.levelTransitionDone = true;
       this.awaitingPerkChoice = true;
-      const goToPerks = () => {
-        this.showPerkChoice(() => {
-          this.awaitingPerkChoice = false;
-          this.nextWaveCountdown = POST_LEVEL_PAUSE_MS;
-        });
-      };
+      const goToPerks = () => { this.showPerkChoice(() => { this.awaitingPerkChoice = false; this.nextWaveCountdown = POST_LEVEL_PAUSE_MS; }); };
       if (this.currentTheme) this.showThemeWarning(this.currentTheme, goToPerks);
       else goToPerks();
       return;
@@ -633,14 +891,14 @@ class TDScene extends Phaser.Scene {
 
   statsFor(typeKey, wave, isBoss) {
     const t = ENEMY_TYPES[typeKey];
-    const baseHp = 30 * Math.pow(1.16, wave - 1);
-    const baseSpeed = 65 + Math.min(45, wave * 2.5);
+    const baseHp = 26 * Math.pow(1.12, wave - 1) * Math.pow(1.15, this.level - 1);
+    const baseSpeed = 48 + Math.min(28, wave * 1.8);
     const themeHpMult = (this.currentTheme && this.currentTheme.hpMultLevel) || 1;
     let hp = baseHp * t.hpMult * this.mult.enemyHp * themeHpMult;
     let speed = baseSpeed * t.speedMult;
-    let reward = Math.round((5 + Math.floor(wave / 2)) * t.reward * this.mult.gold);
+    let reward = Math.round((5 + Math.floor(wave / 2) + this.level * 2) * t.reward * this.mult.gold);
     let livesCost = t.livesCost;
-    if (isBoss) { hp *= 5; speed *= 0.85; reward *= 4; livesCost *= 2; }
+    if (isBoss) { hp *= 4; speed *= 0.85; reward *= 4; livesCost *= 2; }
     return { hp: Math.round(hp), speed, reward, livesCost };
   }
 
@@ -649,37 +907,44 @@ class TDScene extends Phaser.Scene {
     const s = this.statsFor(item.typeKey, this.wave, item.isBoss);
     const radius = item.isBoss ? t.radius * 1.7 : t.radius;
     const start = this.PATH[0];
+    const shadow = this.add.ellipse(start.x, start.y + radius * 0.7, radius * 1.7, radius * 0.6, 0x2a1f3a, 0.16);
     const body = this.add.image(start.x, start.y, 'mobs_' + item.typeKey).setDisplaySize(radius * 2, radius * 2);
     const barW = radius * 2;
     const hpBg = this.add.rectangle(start.x, start.y - radius - 8, barW, 5, 0xffffff, 0.6).setOrigin(0.5);
     const hpFg = this.add.rectangle(start.x - barW / 2, start.y - radius - 8, barW, 5, 0x6fbf6f).setOrigin(0, 0.5);
     const bossRing = item.isBoss ? this.add.circle(start.x, start.y, radius + 5, 0xffffff, 0).setStrokeStyle(3, 0xf0b429) : null;
     const statusRing = this.add.circle(start.x, start.y, radius + 4, 0xffffff, 0).setStrokeStyle(3, 0xffffff).setVisible(false);
+    const statusOverlay = this.add.circle(start.x, start.y, radius, 0xffffff, 0).setVisible(false);
     const shieldRing = t.hasShield ? this.add.circle(start.x, start.y, radius + 7, 0xffffff, 0.12).setStrokeStyle(3, 0xd6cbe8) : null;
 
     this.enemies.push({
       x: start.x, y: start.y, hp: s.hp, maxHp: s.hp, speed: s.speed, reward: s.reward, livesCost: s.livesCost,
-      radius, barW, wpIndex: 1, body, hpBg, hpFg, bossRing, statusRing, shieldRing,
+      radius, barW, wpIndex: 1, body, shadow, hpBg, hpFg, bossRing, statusRing, statusOverlay, shieldRing,
       slowMult: 1, slowUntil: 0, frozenVisualSet: false,
       type: t, typeKey: item.typeKey, isBoss: item.isBoss,
       attackTarget: null, attackTimer: 0, attackWarned: false,
       elementStatus: null, elementUntil: 0, lastReactionTime: -Infinity, lastFreezeTime: -Infinity,
-      shieldActive: !!t.hasShield,
+      shieldActive: !!t.hasShield, statusBlinkTween: null,
     });
   }
 
+  inField(e) { return e.x >= 0 && e.x <= PLAY_W && e.y >= 0 && e.y <= PLAY_H; }
+
   findTarget(tower) {
     let best = null, bestProgress = -1;
+    const range = this.effectiveRange(tower.type, tower.level);
     for (const e of this.enemies) {
+      if (!this.inField(e)) continue;
       const d = Phaser.Math.Distance.Between(tower.x, tower.y, e.x, e.y);
-      if (d <= tower.type.range && e.wpIndex > bestProgress) { bestProgress = e.wpIndex; best = e; }
+      if (d <= range && e.wpIndex > bestProgress) { bestProgress = e.wpIndex; best = e; }
     }
     return best;
   }
 
   fireProjectile(tower, target) {
     const p = this.add.circle(tower.x, tower.y, 5, tower.type.proj);
-    this.projectiles.push({ x: tower.x, y: tower.y, target, type: tower.type, body: p, speed: 420 });
+    const lvlDmgMult = 1 + (tower.level - 1) * 0.08;
+    this.projectiles.push({ x: tower.x, y: tower.y, target, type: tower.type, body: p, speed: 420, lvlDmgMult });
   }
 
   computeIncomingDamage(enemy, dmg, isExplosion) {
@@ -706,18 +971,16 @@ class TDScene extends Phaser.Scene {
   }
 
   destroyEnemyVisuals(enemy) {
+    if (enemy.statusBlinkTween) enemy.statusBlinkTween.stop();
     enemy.body.destroy(); enemy.hpBg.destroy(); enemy.hpFg.destroy();
+    if (enemy.shadow) enemy.shadow.destroy();
     if (enemy.bossRing) enemy.bossRing.destroy();
     if (enemy.statusRing) enemy.statusRing.destroy();
+    if (enemy.statusOverlay) enemy.statusOverlay.destroy();
     if (enemy.shieldRing) enemy.shieldRing.destroy();
   }
 
-  killEnemy(enemy) {
-    this.gold += enemy.reward;
-    this.destroyEnemyVisuals(enemy);
-    this.enemies = this.enemies.filter(e => e !== enemy);
-    this.updateUIText();
-  }
+  killEnemy(enemy) { this.gold += enemy.reward; this.destroyEnemyVisuals(enemy); this.enemies = this.enemies.filter(e => e !== enemy); this.updateUIText(); }
 
   enemyReachedEnd(enemy) {
     this.lives -= enemy.livesCost;
@@ -727,33 +990,44 @@ class TDScene extends Phaser.Scene {
     if (this.lives <= 0) this.triggerGameOver();
   }
 
+  startStatusBlink(enemy, el) {
+    this.stopStatusBlink(enemy);
+    enemy.statusRing.setStrokeStyle(3, ELEMENT_COLORS[el]).setVisible(true);
+    enemy.statusOverlay.setFillStyle(ELEMENT_COLORS[el], 0.32).setAlpha(1).setVisible(true);
+    enemy.statusBlinkTween = this.tweens.add({ targets: enemy.statusOverlay, alpha: { from: 1, to: 0.2 }, duration: 380, yoyo: true, repeat: -1 });
+  }
+
+  stopStatusBlink(enemy) {
+    if (enemy.statusBlinkTween) { enemy.statusBlinkTween.stop(); enemy.statusBlinkTween = null; }
+    if (enemy.statusOverlay) enemy.statusOverlay.setVisible(false).setAlpha(1);
+    if (enemy.statusRing) enemy.statusRing.setVisible(false);
+  }
+
   applyElementStatus(enemy, el, baseDamage, time) {
     if (!el || !this.enemies.includes(enemy)) return;
+    const statusDur = 3000 * this.mult.statusDuration;
 
     if (!enemy.elementStatus) {
-      enemy.elementStatus = el;
-      enemy.elementUntil = time + 3000;
-      enemy.statusRing.setStrokeStyle(3, ELEMENT_COLORS[el]).setVisible(true);
-      if (el === 'cryo') { enemy.slowMult = 0.55; enemy.slowUntil = Math.max(enemy.slowUntil, time + 1200); }
+      enemy.elementStatus = el; enemy.elementUntil = time + statusDur;
+      this.startStatusBlink(enemy, el);
+      if (el === 'cryo') { enemy.slowMult = 0.55; enemy.slowUntil = Math.max(enemy.slowUntil, time + 1200 * this.mult.statusDuration); }
       return;
     }
     if (enemy.elementStatus === el) {
-      enemy.elementUntil = time + 3000;
-      if (el === 'cryo') { enemy.slowMult = 0.55; enemy.slowUntil = Math.max(enemy.slowUntil, time + 1200); }
+      enemy.elementUntil = time + statusDur;
+      if (el === 'cryo') { enemy.slowMult = 0.55; enemy.slowUntil = Math.max(enemy.slowUntil, time + 1200 * this.mult.statusDuration); }
       return;
     }
 
     const oldEl = enemy.elementStatus;
-
-    if (time - enemy.lastReactionTime < REACTION_COOLDOWN_MS) {
-      enemy.elementStatus = el;
-      enemy.elementUntil = time + 3000;
-      enemy.statusRing.setStrokeStyle(3, ELEMENT_COLORS[el]).setVisible(true);
+    if (time - enemy.lastReactionTime < REACTION_COOLDOWN_MS * this.mult.reactionCooldown) {
+      enemy.elementStatus = el; enemy.elementUntil = time + statusDur;
+      this.startStatusBlink(enemy, el);
       return;
     }
 
     enemy.elementStatus = null;
-    enemy.statusRing.setVisible(false);
+    this.stopStatusBlink(enemy);
     enemy.lastReactionTime = time;
     this.resolveReaction(enemy, oldEl, el, baseDamage, time);
   }
@@ -761,56 +1035,66 @@ class TDScene extends Phaser.Scene {
   resolveReaction(enemy, elA, elB, baseDamage, time) {
     const key = [elA, elB].sort().join('_');
     const themed = !!(this.currentTheme && this.currentTheme.reactionKeys.includes(key));
-    const buff = themed ? this.currentTheme.buffMult : 1;
+    const themeBuff = themed ? this.currentTheme.buffMult : 1;
+    const dmgMult = themeBuff * this.mult.reactionDamage;
+    const radiusMult = this.mult.reactionRadius;
 
     switch (key) {
-      case 'cryo_hydro':
+      case 'cryo_hydro': {
+        const freezeCd = FREEZE_COOLDOWN_MS * this.mult.freezeCooldown;
         if (themed) {
-          const radius = 100;
+          const radius = 100 * radiusMult;
           for (const e2 of [...this.enemies]) {
             const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
-            if (d <= radius) { e2.slowMult = 0; e2.slowUntil = time + 1600 * buff; e2.lastFreezeTime = time; }
+            if (d <= radius) { e2.slowMult = 0; e2.slowUntil = time + 1600 * themeBuff * this.mult.statusDuration; e2.lastFreezeTime = time; }
           }
           this.showFloatText(enemy.x, enemy.y - 30, 'Ледяной взрыв!', '#3f8fae');
-        } else if (time - enemy.lastFreezeTime >= FREEZE_COOLDOWN_MS) {
-          enemy.slowMult = 0; enemy.slowUntil = time + 1600; enemy.lastFreezeTime = time;
+        } else if (time - enemy.lastFreezeTime >= freezeCd) {
+          enemy.slowMult = 0; enemy.slowUntil = time + 1600 * this.mult.statusDuration; enemy.lastFreezeTime = time;
           this.showFloatText(enemy.x, enemy.y - 30, 'Заморозка!', '#3f8fae');
         } else {
           enemy.slowMult = 0.55; enemy.slowUntil = Math.max(enemy.slowUntil, time + 1000);
           this.showFloatText(enemy.x, enemy.y - 30, 'Заморозка на КД', '#7fa8c0');
         }
         break;
+      }
       case 'hydro_pyro':
-        this.dealDamage(enemy, Math.round(baseDamage * buff));
+        this.dealDamage(enemy, Math.round(baseDamage * dmgMult));
         this.showFloatText(enemy.x, enemy.y - 30, 'Вскипание!', '#e08040');
         break;
       case 'cryo_pyro':
-        this.dealDamage(enemy, Math.round(baseDamage * buff));
+        this.dealDamage(enemy, Math.round(baseDamage * dmgMult));
         this.showFloatText(enemy.x, enemy.y - 30, 'Плавление!', '#e0973f');
         break;
-      case 'electro_hydro':
-        this.dealDamage(enemy, Math.round(baseDamage * 0.6 * buff));
+      case 'electro_hydro': {
+        const radius = 90 * radiusMult;
+        this.dealDamage(enemy, Math.round(baseDamage * 0.6 * dmgMult));
         for (const e2 of [...this.enemies]) {
           if (e2 === enemy) continue;
           const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
-          if (d <= 90 && e2.elementStatus === 'hydro') this.dealDamage(e2, Math.round(baseDamage * 0.6 * buff));
+          if (d <= radius && e2.elementStatus === 'hydro' && this.inField(e2)) this.dealDamage(e2, Math.round(baseDamage * 0.6 * dmgMult));
         }
         this.showFloatText(enemy.x, enemy.y - 30, 'Наэлектризовано!', '#8a6fc9');
         break;
-      case 'cryo_electro':
+      }
+      case 'cryo_electro': {
+        const radius = 80 * radiusMult;
         for (const e2 of [...this.enemies]) {
           const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
-          if (d <= 80) this.dealDamage(e2, Math.round(baseDamage * 0.8 * buff), true);
+          if (d <= radius && this.inField(e2)) this.dealDamage(e2, Math.round(baseDamage * 0.8 * dmgMult), true);
         }
         this.showFloatText(enemy.x, enemy.y - 30, 'Сверхпроводник!', '#8a6fc9');
         break;
-      case 'electro_pyro':
+      }
+      case 'electro_pyro': {
+        const radius = 110 * radiusMult;
         for (const e2 of [...this.enemies]) {
           const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
-          if (d <= 110) this.dealDamage(e2, Math.round(baseDamage * 1.3 * buff), true);
+          if (d <= radius && this.inField(e2)) this.dealDamage(e2, Math.round(baseDamage * 1.3 * dmgMult), true);
         }
         this.showFloatText(enemy.x, enemy.y - 30, 'Перегрузка!', '#d9553f');
         break;
+      }
     }
   }
 
@@ -819,6 +1103,7 @@ class TDScene extends Phaser.Scene {
     this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x2a2038, 0.55).setDepth(4000);
     const w = 420, h = 220, x = WIDTH / 2 - w / 2, y = HEIGHT / 2 - h / 2;
     const g = this.add.graphics().setDepth(4001);
+    g.fillStyle(0x000000, 0.15).fillRoundedRect(x + 5, y + 8, w, h, 22);
     g.fillStyle(0xfffdfb, 1).fillRoundedRect(x, y, w, h, 22);
     g.lineStyle(3, PALETTE.panelStroke, 1).strokeRoundedRect(x, y, w, h, 22);
     this.txt(WIDTH / 2, y + 46, 'Игра окончена', { fontFamily: 'Arial', fontSize: '30px', color: '#d9553f' }).setOrigin(0.5).setDepth(4002);
@@ -852,20 +1137,17 @@ class TDScene extends Phaser.Scene {
 
     if (this.waveInProgress && this.spawnQueueList.length > 0) {
       this.spawnCooldown -= delta;
-      if (this.spawnCooldown <= 0) {
-        this.spawnEnemy(this.spawnQueueList.shift());
-        this.spawnCooldown = this.spawnInterval;
-      }
+      if (this.spawnCooldown <= 0) { this.spawnEnemy(this.spawnQueueList.shift()); this.spawnCooldown = this.spawnInterval; }
     }
     if (this.waveInProgress && this.spawnQueueList.length === 0 && this.enemies.length === 0) {
       this.waveInProgress = false;
-      this.gold += Math.round((20 + this.wave * 2) * this.mult.gold);
+      this.gold += Math.round((20 + this.wave * 2 + this.level * 5) * this.mult.gold);
       this.nextWaveCountdown = isTransitionWave(this.wave + 1) ? 1500 : 3500;
       this.updateUIText();
     }
 
     for (const e of [...this.enemies]) {
-      if (e.elementStatus && time > e.elementUntil) { e.elementStatus = null; e.statusRing.setVisible(false); }
+      if (e.elementStatus && time > e.elementUntil) { e.elementStatus = null; this.stopStatusBlink(e); }
 
       if (e.type.attacksTowers) {
         if (!e.attackTarget || !this.towers.includes(e.attackTarget)) {
@@ -905,19 +1187,20 @@ class TDScene extends Phaser.Scene {
       if (dist <= step) {
         e.x = target.x; e.y = target.y; e.wpIndex += 1;
         if (e.wpIndex >= this.PATH.length) { this.enemyReachedEnd(e); continue; }
-      } else {
-        e.x += dx / dist * step; e.y += dy / dist * step;
-      }
+      } else { e.x += dx / dist * step; e.y += dy / dist * step; }
       e.body.setPosition(e.x, e.y);
+      if (e.shadow) e.shadow.setPosition(e.x, e.y + e.radius * 0.7);
       e.hpBg.setPosition(e.x, e.y - e.radius - 8);
       e.hpFg.setPosition(e.x - e.barW / 2, e.y - e.radius - 8);
       if (e.bossRing) e.bossRing.setPosition(e.x, e.y);
       if (e.statusRing) e.statusRing.setPosition(e.x, e.y);
+      if (e.statusOverlay) e.statusOverlay.setPosition(e.x, e.y);
       if (e.shieldRing) e.shieldRing.setPosition(e.x, e.y);
     }
 
     for (const t of this.towers) {
-      const effInterval = t.type.fireRate / this.mult.fireRate;
+      const speedMult = this.mult.fireRate * (1 + (t.level - 1) * 0.04);
+      const effInterval = t.type.fireRate / speedMult;
       if (time - t.lastFired >= effInterval) {
         const target = this.findTarget(t);
         if (target) { this.fireProjectile(t, target); t.lastFired = time; }
@@ -925,35 +1208,28 @@ class TDScene extends Phaser.Scene {
     }
 
     for (const p of [...this.projectiles]) {
-      if (!this.enemies.includes(p.target)) {
-        p.body.destroy();
-        this.projectiles = this.projectiles.filter(x => x !== p);
-        continue;
-      }
+      if (!this.enemies.includes(p.target)) { p.body.destroy(); this.projectiles = this.projectiles.filter(x => x !== p); continue; }
       const dx = p.target.x - p.x, dy = p.target.y - p.y;
       const dist = Math.hypot(dx, dy);
       const step = p.speed * dt;
       if (dist <= step) {
-        const effDamage = Math.round(p.type.damage * this.mult.damage);
+        const effDamage = Math.round(p.type.damage * this.mult.damage * p.lvlDmgMult);
+        const effSplash = p.type.splash * this.mult.splash;
         const dealHit = (enemy) => {
           this.applyDamage(enemy, effDamage);
           if (p.type.element) this.applyElementStatus(enemy, p.type.element, effDamage, time);
           if (this.enemies.includes(enemy) && enemy.hp <= 0) this.killEnemy(enemy);
         };
-        if (p.type.splash > 0) {
+        if (effSplash > 0) {
           for (const e of [...this.enemies]) {
+            if (!this.inField(e)) continue;
             const d = Phaser.Math.Distance.Between(p.target.x, p.target.y, e.x, e.y);
-            if (d <= p.type.splash) dealHit(e);
+            if (d <= effSplash) dealHit(e);
           }
-        } else {
-          dealHit(p.target);
-        }
+        } else if (this.inField(p.target)) { dealHit(p.target); }
         p.body.destroy();
         this.projectiles = this.projectiles.filter(x => x !== p);
-      } else {
-        p.x += dx / dist * step; p.y += dy / dist * step;
-        p.body.setPosition(p.x, p.y);
-      }
+      } else { p.x += dx / dist * step; p.y += dy / dist * step; p.body.setPosition(p.x, p.y); }
     }
   }
 }
@@ -964,12 +1240,7 @@ const config = {
   height: HEIGHT,
   parent: 'game-container',
   backgroundColor: '#f5f1fa',
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: WIDTH,
-    height: HEIGHT,
-  },
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: WIDTH, height: HEIGHT },
   scene: TDScene,
 };
 
