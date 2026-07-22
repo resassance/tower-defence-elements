@@ -1,9 +1,11 @@
-const TILE = 70;
+const TILE = 96;
+const TOWER_BODY = 64;
+const RANGE_SCALE = TILE / 70;
 const COLS = 16;
 const ROWS = 9;
 const PLAY_W = COLS * TILE;
 const PLAY_H = ROWS * TILE;
-const UI_H = 170;
+const UI_H = 196;
 const WIDTH = PLAY_W;
 const HEIGHT = PLAY_H + UI_H;
 
@@ -11,7 +13,7 @@ const colX = c => c * TILE + TILE / 2;
 const rowY = r => r * TILE + TILE / 2;
 
 const WAVES_PER_LEVEL = 5;
-const WRECKER_ATTACK_RANGE = 100;
+const WRECKER_ATTACK_RANGE = 100 * RANGE_SCALE;
 const SELL_REFUND_RATIO = 0.6;
 const REACTION_COOLDOWN_MS = 1000;
 const FREEZE_COOLDOWN_MS = 3000;
@@ -25,13 +27,14 @@ const MAX_TOWERS = 24;
 const ZONE_PATH_MAX = TILE * 0.5;
 const ZONE_BORDER_MAX = TILE * 1.45;
 const ZONE_GRASS_MAX = TILE * 3.15;
-const TIER_BORDER = 0, TIER_GRASS = 1, TIER_FOREST = 2;
+const TIER_PATH = 0, TIER_BORDER = 1, TIER_GRASS = 2, TIER_FOREST = 3;
 
 const PALETTE = {
   sceneBg: 0xf3edfb,
   tileBorder: 0xffd2e6,
   tileGrass: 0xd7f0ca,
   tileForest: 0x9fce8f,
+  tilePath: 0xe4c99a,
   pathFill: 0xd6c0ea,
   pathStroke: 0x9c7ecf,
   hudBg: 0xffffff,
@@ -52,7 +55,7 @@ const ELEMENT_COLORS = { hydro: 0x6fb8f5, cryo: 0xa8e0f5, pyro: 0xff9f6b, electr
 const ELEMENT_ICON = { hydro: '💧', cryo: '❄️', pyro: '🔥', electro: '⚡' };
 
 const ASSET_MANIFEST = {
-  tiles: { border: 'assets/textures/border.png', grass: 'assets/textures/grass.png', forest: 'assets/textures/forest.png' },
+  tiles: { border: 'assets/textures/border.png', grass: 'assets/textures/grass.png', forest: 'assets/textures/forest.png', trail: 'assets/textures/trail.png' },
   masks: {
     edge_top: 'assets/textures/masks/edge_top.png', edge_right: 'assets/textures/masks/edge_right.png',
     edge_bottom: 'assets/textures/masks/edge_bottom.png', edge_left: 'assets/textures/masks/edge_left.png',
@@ -64,27 +67,27 @@ const ASSET_MANIFEST = {
 };
 
 const ICON_MANIFEST = {
-  elements: { hydro: 'assets/icons/elements/hydro.png', cryo: 'assets/icons/elements/cryo.png', pyro: 'assets/icons/elements/pyro.png', electro: 'assets/icons/elements/electro.png' },
-  themes: { swift: 'assets/icons/themes/swift.png', armored: 'assets/icons/themes/armored.png', standard: 'assets/icons/themes/standard.png', swarm: 'assets/icons/themes/swarm.png', exotic: 'assets/icons/themes/exotic.png' },
+  elements: { hydro: 'assets/icons/elements/hydroicon.png', cryo: 'assets/icons/elements/cryoicon.png', pyro: 'assets/icons/elements/pyroicon.png', electro: 'assets/icons/elements/electroicon.png' },
+  themes: { swift: 'assets/icons/themes/swift.png', armored: 'assets/icons/themes/armored.png', standard: 'assets/icons/themes/standart.png', swarm: 'assets/icons/themes/swarm.png', exotic: 'assets/icons/themes/exotic.png' },
   perks: { goldrush: 'assets/icons/perks/goldrush.png', sharp: 'assets/icons/perks/sharp.png', haste: 'assets/icons/perks/haste.png', walls: 'assets/icons/perks/walls.png', discount: 'assets/icons/perks/discount.png', swarm: 'assets/icons/perks/swarm.png' },
   ui: { sell: 'assets/icons/ui/sell.png' },
 };
 
 const TOWER_TYPES = {
-  blade:   { key:'blade',   name:'Клинок-тян',  cost:50,  range:140, fireRate:650,  damage:11, color:0xff8fae, proj:0xffd6e2, splash:0,  element:null },
-  cryo:    { key:'cryo',    name:'Крио-тян',    cost:70,  range:120, fireRate:1050, damage:6,  color:0x8fd6ef, proj:0xd8f4ff, splash:0,  element:'cryo' },
-  bomber:  { key:'bomber',  name:'Бомбер-тян',  cost:100, range:190, fireRate:1700, damage:16, color:0xffb877, proj:0xffe3c2, splash:70, element:'pyro' },
-  hydro:   { key:'hydro',   name:'Гидро-тян',   cost:60,  range:150, fireRate:900,  damage:9,  color:0x7ec8ff, proj:0xd2ecff, splash:0,  element:'hydro' },
-  electro: { key:'electro', name:'Электро-тян', cost:90,  range:170, fireRate:950,  damage:10, color:0xc9aaf5, proj:0xe8dbff, splash:0,  element:'electro' },
+  blade:   { key:'blade',   name:'Клинок-тян',  cost:50,  range:140 * RANGE_SCALE, fireRate:650,  damage:11, color:0xff8fae, proj:0xffd6e2, splash:0,  element:null },
+  cryo:    { key:'cryo',    name:'Крио-тян',    cost:70,  range:120 * RANGE_SCALE, fireRate:1050, damage:6,  color:0x8fd6ef, proj:0xd8f4ff, splash:0,  element:'cryo' },
+  bomber:  { key:'bomber',  name:'Бомбер-тян',  cost:100, range:190 * RANGE_SCALE, fireRate:1700, damage:16, color:0xffb877, proj:0xffe3c2, splash:70 * RANGE_SCALE, element:'pyro' },
+  hydro:   { key:'hydro',   name:'Гидро-тян',   cost:60,  range:150 * RANGE_SCALE, fireRate:900,  damage:9,  color:0x7ec8ff, proj:0xd2ecff, splash:0,  element:'hydro' },
+  electro: { key:'electro', name:'Электро-тян', cost:90,  range:170 * RANGE_SCALE, fireRate:950,  damage:10, color:0xc9aaf5, proj:0xe8dbff, splash:0,  element:'electro' },
 };
 
 const TOWER_MAX_HP = 150;
 
 const ENEMY_TYPES = {
-  grunt:    { name:'Марионетка', hpMult:1,    speedMult:1,    reward:1,   livesCost:1, color:0xa87fd9, ring:0xd9c2f0, radius:14 },
-  runner:   { name:'Рывок',      hpMult:0.5,  speedMult:1.7,  reward:0.8, livesCost:1, color:0xe86fa0, ring:0xffc2dc, radius:11 },
-  shielded: { name:'Щитовик',    hpMult:0.5,  speedMult:0.7,  reward:1.6, livesCost:2, color:0x7a5fb8, ring:0xb8a8dc, radius:18, hasShield:true },
-  wrecker:  { name:'Крушитель',  hpMult:1.3,  speedMult:0.8,  reward:1.7, livesCost:1, color:0xe85f52, ring:0xffb0a8, radius:15, attacksTowers:true, attackDamage:10, attackRate:900 },
+  grunt:    { name:'Марионетка', hpMult:1,    speedMult:1,    reward:1,   livesCost:1, color:0xa87fd9, ring:0xd9c2f0, radius:19 },
+  runner:   { name:'Рывок',      hpMult:0.5,  speedMult:1.7,  reward:0.8, livesCost:1, color:0xe86fa0, ring:0xffc2dc, radius:15 },
+  shielded: { name:'Щитовик',    hpMult:0.5,  speedMult:0.7,  reward:1.6, livesCost:2, color:0x7a5fb8, ring:0xb8a8dc, radius:25, hasShield:true },
+  wrecker:  { name:'Крушитель',  hpMult:1.3,  speedMult:0.8,  reward:1.7, livesCost:1, color:0xe85f52, ring:0xffb0a8, radius:21, attacksTowers:true, attackDamage:10, attackRate:900 },
 };
 
 const TOWER_MILESTONES = {
@@ -120,11 +123,24 @@ const TOWER_MILESTONES = {
   ],
 };
 
-const UI_LAYOUT = {
-  cardW: 118, cardH: 108, cardGap: 10, cardStartX: 16, cardY: PLAY_H + 20,
-  sellBtnX: 674, sellBtnW: 110, sellBtnH: 108, sellBtnY: PLAY_H + 20,
-  waveBtnX: 810, waveBtnW: 294, waveBtnH: 60, waveBtnY: PLAY_H + UI_H / 2,
-};
+const IS_MOBILE = typeof window !== 'undefined' && (window.innerWidth < 820 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ''));
+
+const UI_LAYOUT = (() => {
+  const marginX = 20, gap = 14, waveBtnW = 300, slots = 6;
+  const cardW = Math.round((PLAY_W - marginX * 2 - waveBtnW - gap * slots) / slots);
+  const cardH = 140;
+  const cardStartX = marginX, cardY = PLAY_H + 26;
+  const sellBtnX = cardStartX + 5 * (cardW + gap);
+  const waveBtnX = sellBtnX + cardW + gap;
+  return {
+    cardW, cardH, cardGap: gap, cardStartX, cardY,
+    sellBtnX, sellBtnW: cardW, sellBtnH: cardH, sellBtnY: cardY,
+    waveBtnX, waveBtnW, waveBtnH: 82, waveBtnY: PLAY_H + UI_H / 2,
+    drawerPeek: 54,
+  };
+})();
+
+const UI_SCALE = IS_MOBILE ? 1.35 : 1.15;
 
 const PERKS = [
   { id:'goldrush',  name:'Золотая жила',    desc:'+40% золота за волны и убийства',            icon:'💰', apply:s=>{ s.mult.gold *= 1.4; } },
@@ -190,6 +206,13 @@ class TDScene extends Phaser.Scene {
   create() {
     this.buildPlaceholderTextures();
 
+    ['characters', 'mobs'].forEach(group => {
+      Object.keys(ASSET_MANIFEST[group]).forEach(name => {
+        const key = group + '_' + name;
+        if (this.textures.exists(key)) this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      });
+    });
+
     this.gold = 150;
     this.lives = 15;
     this.wave = 0;
@@ -227,13 +250,15 @@ class TDScene extends Phaser.Scene {
     this.drawTopHud();
     this.drawBottomUI();
 
+    if (typeof Bridge !== 'undefined') { Bridge.notifyGameReady(); Bridge.gameplayStart(); }
+
     this.rangePreview = this.add.circle(0, 0, 0, 0x8a6fd6, 0.10).setStrokeStyle(1, 0x8a6fd6, 0.5).setVisible(false);
 
     this.input.on('pointermove', pointer => {
       if (this.dragState) {
         const dist = Phaser.Math.Distance.Between(this.dragState.startX, this.dragState.startY, pointer.x, pointer.y);
         if (!this.dragState.ghost && dist > DRAG_THRESHOLD) {
-          this.dragState.ghost = this.add.image(pointer.x, pointer.y, 'characters_' + this.dragState.key).setDisplaySize(46, 46).setAlpha(0.8).setDepth(2000);
+          this.dragState.ghost = this.add.image(pointer.x, pointer.y, 'characters_' + this.dragState.key).setDisplaySize(TOWER_BODY, TOWER_BODY).setAlpha(0.8).setDepth(2000);
           this.selectedType = this.dragState.key;
           this.refreshButtonHighlight();
         }
@@ -285,12 +310,15 @@ class TDScene extends Phaser.Scene {
 
   txt(x, y, str, style = {}) {
     const merged = Object.assign({ fontFamily: 'Arial', fontSize: '16px', color: PALETTE.textDark, padding: { top: 8, bottom: 8, left: 4, right: 4 } }, style);
+    const base = parseFloat(merged.fontSize);
+    if (!Number.isNaN(base)) merged.fontSize = Math.round(base * UI_SCALE) + 'px';
     return this.add.text(x, y, str, merged);
   }
 
   addIcon(x, y, category, name, emojiFallback, size) {
     const key = 'icon_' + category + '_' + name;
-    if (this.textures.exists(key) && !this.missingKeys.has(key)) return this.add.image(x, y, key).setDisplaySize(size, size);
+    const s = size * UI_SCALE;
+    if (this.textures.exists(key) && !this.missingKeys.has(key)) return this.add.image(x, y, key).setDisplaySize(s, s);
     return this.txt(x, y, emojiFallback, { fontSize: Math.round(size * 0.85) + 'px' }).setOrigin(0.5);
   }
 
@@ -324,7 +352,7 @@ class TDScene extends Phaser.Scene {
     const makeEdgeMask = (key, side) => {
       if (!this.needsPlaceholder(key)) return;
       const g = this.add.graphics();
-      const fade = TILE * 0.7;
+      const fade = TILE * 0.3;
       const steps = 36;
       for (let i = 0; i < steps; i++) {
         const d0 = (i / steps) * fade, d1 = ((i + 1) / steps) * fade;
@@ -345,7 +373,7 @@ class TDScene extends Phaser.Scene {
       const g = this.add.graphics();
       const cx = corner.includes('l') ? 0 : TILE;
       const cy = corner.includes('t') ? 0 : TILE;
-      const maxR = TILE * 0.72;
+      const maxR = TILE * 0.34;
       const steps = 40;
       for (let i = 0; i < steps; i++) {
         const r0 = (i / steps) * maxR, r1 = ((i + 1) / steps) * maxR;
@@ -362,9 +390,10 @@ class TDScene extends Phaser.Scene {
     makeTile('tiles_border', PALETTE.tileBorder);
     makeTile('tiles_grass', PALETTE.tileGrass);
     makeTile('tiles_forest', PALETTE.tileForest);
+    makeTile('tiles_trail', PALETTE.tilePath);
     ['top', 'right', 'bottom', 'left'].forEach(side => makeEdgeMask('masks_edge_' + side, side));
     ['tl', 'tr', 'bl', 'br'].forEach(corner => makeCornerMask('masks_corner_' + corner, corner));
-    Object.keys(TOWER_TYPES).forEach(key => makeSquare('characters_' + key, TOWER_TYPES[key].color, 46));
+    Object.keys(TOWER_TYPES).forEach(key => makeSquare('characters_' + key, TOWER_TYPES[key].color, TOWER_BODY));
     Object.keys(ENEMY_TYPES).forEach(key => makeCircle('mobs_' + key, ENEMY_TYPES[key].color, ENEMY_TYPES[key].ring, ENEMY_TYPES[key].radius * 2));
   }
 
@@ -375,7 +404,7 @@ class TDScene extends Phaser.Scene {
       const d = pointSegDist(cx, cy, this.PATH[i].x, this.PATH[i].y, this.PATH[i + 1].x, this.PATH[i + 1].y);
       if (d < minDist) minDist = d;
     }
-    if (minDist < ZONE_PATH_MAX) return { buildable: false, tier: TIER_GRASS };
+    if (minDist < ZONE_PATH_MAX) return { buildable: false, tier: TIER_PATH };
     if (minDist < ZONE_BORDER_MAX) return { buildable: true, tier: TIER_BORDER };
     if (minDist < ZONE_GRASS_MAX) return { buildable: false, tier: TIER_GRASS };
     return { buildable: false, tier: TIER_FOREST };
@@ -399,12 +428,21 @@ class TDScene extends Phaser.Scene {
     return this.tileTier[r][c];
   }
 
-  drawLevelBackground() {
-    this.tileImages.forEach(img => img.destroy());
-    this.tileImages = [];
+  bakeLevelBackground() {
+    const srcImg = key => this.textures.get(key).getSourceImage();
+    const makeCanvas = () => {
+      const c = document.createElement('canvas');
+      c.width = PLAY_W; c.height = PLAY_H;
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      return { c, ctx };
+    };
 
-    const rt = this.add.renderTexture(0, 0, PLAY_W, PLAY_H).setOrigin(0, 0).setDepth(-100);
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) rt.draw('tiles_forest', c * TILE, r * TILE);
+    const REPEAT = 2;
+    const drawTileTexture = (ctx, key, x, y) => {
+      const sub = TILE / REPEAT;
+      for (let dy = 0; dy < REPEAT; dy++) for (let dx = 0; dx < REPEAT; dx++) ctx.drawImage(srcImg(key), x + dx * sub, y + dy * sub, sub, sub);
+    };
 
     const EDGE = { top: [-1, 0], right: [0, 1], bottom: [1, 0], left: [0, -1] };
     const CORNER = {
@@ -412,33 +450,75 @@ class TDScene extends Phaser.Scene {
       bl: { d: [1, -1], adj: ['bottom', 'left'] }, br: { d: [1, 1], adj: ['bottom', 'right'] },
     };
 
-    const paintLayer = (rank, texKey) => {
+    const forestL = makeCanvas();
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) drawTileTexture(forestL.ctx, 'tiles_forest', c * TILE, r * TILE);
+
+    const paintLayer = (texKey, isActive, isSameTier, edgeFallback) => {
+      const layer = makeCanvas();
       for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
-          const tier = this.tileTier[r][c];
-          const active = rank === 1 ? tier <= TIER_GRASS : tier === TIER_BORDER;
-          if (!active) continue;
+          if (!isActive(this.tileTier[r][c])) continue;
           const x = c * TILE, y = r * TILE;
-          rt.draw(texKey, x, y);
-          const sameAsRank = (rr, cc, fb) => { const t = this.tierAt(rr, cc, fb); return rank === 2 ? t === TIER_BORDER : t <= TIER_GRASS; };
+          drawTileTexture(layer.ctx, texKey, x, y);
           const edgeDiffers = {};
+          const eraseMask = maskKey => {
+            layer.ctx.globalCompositeOperation = 'destination-out';
+            layer.ctx.drawImage(srcImg(maskKey), x, y, TILE, TILE);
+            layer.ctx.globalCompositeOperation = 'source-over';
+          };
           Object.entries(EDGE).forEach(([side, [dr, dc]]) => {
-            const differs = !sameAsRank(r + dr, c + dc, rank === 2 ? TIER_BORDER : TIER_GRASS);
+            const differs = !isSameTier(this.tierAt(r + dr, c + dc, edgeFallback));
             edgeDiffers[side] = differs;
-            if (differs) rt.erase('masks_edge_' + side, x, y);
+            if (differs) eraseMask('masks_edge_' + side);
           });
           Object.entries(CORNER).forEach(([corner, info]) => {
             const [dr, dc] = info.d;
             if (!info.adj.every(side => !edgeDiffers[side])) return;
-            const diagDiffers = !sameAsRank(r + dr, c + dc, rank === 2 ? TIER_BORDER : TIER_GRASS);
-            if (diagDiffers) rt.erase('masks_corner_' + corner, x, y);
+            const diagDiffers = !isSameTier(this.tierAt(r + dr, c + dc, edgeFallback));
+            if (diagDiffers) eraseMask('masks_corner_' + corner);
           });
         }
       }
+      return layer;
     };
-    paintLayer(1, 'tiles_grass');
-    paintLayer(2, 'tiles_border');
-    this.tileImages.push(rt);
+
+    const grassL = paintLayer('tiles_grass', tier => tier <= TIER_GRASS, tier => tier <= TIER_GRASS, TIER_GRASS);
+    const borderL = paintLayer('tiles_border', tier => tier === TIER_BORDER, tier => tier === TIER_BORDER, TIER_BORDER);
+    const pathL = paintLayer('tiles_trail', tier => tier === TIER_PATH, tier => tier === TIER_PATH, TIER_PATH);
+
+    const final = makeCanvas();
+    final.ctx.drawImage(forestL.c, 0, 0);
+    final.ctx.drawImage(grassL.c, 0, 0);
+    final.ctx.drawImage(borderL.c, 0, 0);
+    final.ctx.drawImage(pathL.c, 0, 0);
+
+    const key = 'baked_level_bg';
+    if (this.textures.exists(key)) this.textures.remove(key);
+    this.textures.addCanvas(key, final.c);
+    return key;
+  }
+
+  refreshBuildableMarkers() {
+    if (this.buildableGfx) this.buildableGfx.destroy();
+    const g = this.add.graphics().setDepth(-40);
+    const inset = 8;
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (!this.buildable[r][c] || this.occupied[r][c]) continue;
+        const x = c * TILE + inset, y = r * TILE + inset, s = TILE - inset * 2;
+        g.fillStyle(0xffffff, 0.14).fillRoundedRect(x, y, s, s, 12);
+        g.lineStyle(2, 0xffffff, 0.32).strokeRoundedRect(x, y, s, s, 12);
+      }
+    }
+    this.buildableGfx = g;
+  }
+
+  drawLevelBackground() {
+    this.tileImages.forEach(img => img.destroy());
+    this.tileImages = [];
+
+    const bgKey = this.bakeLevelBackground();
+    this.tileImages.push(this.add.image(0, 0, bgKey).setOrigin(0, 0).setDepth(-102));
 
     const vignette = this.add.graphics().setDepth(-60);
     const vSteps = 18;
@@ -448,13 +528,8 @@ class TDScene extends Phaser.Scene {
       vignette.lineStyle(4, 0x5a3f7a, 0.028 * (1 - t)).strokeRect(inset, inset, PLAY_W - inset * 2, PLAY_H - inset * 2);
     }
     this.tileImages.push(vignette);
+    this.refreshBuildableMarkers();
 
-    const g = this.add.graphics().setDepth(-50);
-    g.lineStyle(9, PALETTE.pathFill, 0.9);
-    for (let i = 0; i < this.PATH.length - 1; i++) g.lineBetween(this.PATH[i].x, this.PATH[i].y, this.PATH[i + 1].x, this.PATH[i + 1].y);
-    g.lineStyle(2, PALETTE.pathStroke, 1);
-    for (let i = 0; i < this.PATH.length - 1; i++) g.lineBetween(this.PATH[i].x, this.PATH[i].y, this.PATH[i + 1].x, this.PATH[i + 1].y);
-    this.tileImages.push(g);
   }
 
   drawStaticUI() {
@@ -572,8 +647,27 @@ class TDScene extends Phaser.Scene {
     gfx.fillStyle(0xffffff, 0.45).fillRoundedRect(x + 3, y + 3, w - 6, Math.min(h * 0.32, 26), 10);
   }
 
+  redrawDrawerMask(visibleH) {
+    this.drawerMaskGfx.clear();
+    this.drawerMaskGfx.fillStyle(0xffffff, 1).fillRect(0, UI_LAYOUT.cardY, PLAY_W, visibleH);
+  }
+
+  setDrawerExpanded(expanded) {
+    this.drawerExpanded = expanded;
+    this.drawHandle();
+    const state = { h: expanded ? UI_LAYOUT.drawerPeek : UI_LAYOUT.cardH };
+    this.tweens.add({
+      targets: state,
+      h: expanded ? UI_LAYOUT.cardH : UI_LAYOUT.drawerPeek,
+      duration: 260,
+      ease: 'Sine.easeOut',
+      onUpdate: () => this.redrawDrawerMask(state.h),
+    });
+  }
+
   drawBottomUI() {
     this.towerButtons = {};
+    this.towerDrawer = this.add.container(0, 0);
     const keys = Object.keys(TOWER_TYPES);
     keys.forEach((key, i) => {
       const t = TOWER_TYPES[key];
@@ -585,13 +679,14 @@ class TDScene extends Phaser.Scene {
       this.drawCardPanel(gfx, bx, by, bw, bh, false);
       const zone = this.add.zone(bx, by, bw, bh).setOrigin(0, 0).setInteractive({ useHandCursor: true });
 
-      this.add.image(bx + bw / 2, by + 30, 'characters_' + key).setDisplaySize(36, 36);
-      if (t.element) this.addIcon(bx + bw - 18, by + 14, 'elements', t.element, ELEMENT_ICON[t.element], 18);
-      this.txt(bx + bw / 2, by + 56, t.name, { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textDark }).setOrigin(0.5, 0);
-      this.costTexts[key] = this.txt(bx + bw / 2, by + 80, '💰 ' + this.effectiveCost(key), { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textAccent }).setOrigin(0.5, 0);
+      const icon = this.add.image(bx + bw / 2, by + 40, 'characters_' + key).setDisplaySize(58, 58);
+      const elIcon = t.element ? this.addIcon(bx + bw - 22, by + 18, 'elements', t.element, ELEMENT_ICON[t.element], 20) : null;
+      const nameText = this.txt(bx + bw / 2, by + 78, t.name, { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textDark }).setOrigin(0.5, 0);
+      this.costTexts[key] = this.txt(bx + bw / 2, by + 104, '💰 ' + this.effectiveCost(key), { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textAccent }).setOrigin(0.5, 0);
 
       zone.on('pointerdown', pointer => {
         if (this.awaitingPerkChoice) return;
+        if (IS_MOBILE && !this.drawerExpanded) { this.setDrawerExpanded(true); return; }
         this.sellMode = false;
         this.drawSellPanel(false);
         this.dragState = { key, startX: pointer.x, startY: pointer.y, wasSelected: this.selectedType === key, ghost: null };
@@ -599,13 +694,34 @@ class TDScene extends Phaser.Scene {
       zone.on('pointerover', () => { if (this.selectedType !== key) { this.drawCardPanel(gfx, bx, by, bw, bh, false); gfx.lineStyle(2, PALETTE.accentA, 0.9).strokeRoundedRect(bx, by, bw, bh, 14); } });
       zone.on('pointerout', () => this.refreshButtonHighlight());
       this.towerButtons[key] = gfx;
+      this.towerDrawer.add([gfx, zone, icon, ...(elIcon ? [elIcon] : []), nameText, this.costTexts[key]]);
     });
+
+    this.drawerMaskGfx = this.make.graphics({ x: 0, y: 0 }, false);
+    this.towerDrawer.setMask(new Phaser.Display.Masks.GeometryMask(this, this.drawerMaskGfx));
+    this.drawerExpanded = !IS_MOBILE;
+    this.redrawDrawerMask(this.drawerExpanded ? UI_LAYOUT.cardH : UI_LAYOUT.drawerPeek);
+
+    const handleW = 90, handleH = 26;
+    const handleX = UI_LAYOUT.cardStartX + (5 * UI_LAYOUT.cardW + 4 * UI_LAYOUT.cardGap) / 2 - handleW / 2;
+    const handleY = UI_LAYOUT.cardY - handleH - 4;
+    this.drawerHandleGfx = this.add.graphics().setDepth(400);
+    this.drawerHandleText = this.txt(handleX + handleW / 2, handleY + handleH / 2, '▲ Героини', { fontFamily: 'Arial', fontSize: '13px', color: '#ffffff' }).setOrigin(0.5).setDepth(401);
+    const handleZone = this.add.zone(handleX, handleY, handleW, handleH).setOrigin(0, 0).setInteractive({ useHandCursor: true }).setDepth(402);
+    handleZone.on('pointerdown', () => this.setDrawerExpanded(!this.drawerExpanded));
+    this.drawHandle = () => {
+      this.drawerHandleGfx.clear();
+      this.drawerHandleGfx.fillStyle(0x8a5fb0, 0.92).fillRoundedRect(handleX, handleY, handleW, handleH, 13);
+      this.drawerHandleText.setText(this.drawerExpanded ? '▼ Героини' : '▲ Героини');
+    };
+    this.drawHandle();
+    if (!IS_MOBILE) { this.drawerHandleGfx.setVisible(false); this.drawerHandleText.setVisible(false); handleZone.setVisible(false).disableInteractive(); }
 
     this.sellGfx = this.add.graphics();
     this.drawSellPanel(false);
     const sellZone = this.add.zone(UI_LAYOUT.sellBtnX, UI_LAYOUT.sellBtnY, UI_LAYOUT.sellBtnW, UI_LAYOUT.sellBtnH).setOrigin(0, 0).setInteractive({ useHandCursor: true });
-    this.addIcon(UI_LAYOUT.sellBtnX + 26, UI_LAYOUT.sellBtnY + 32, 'ui', 'sell', '🗑', 30);
-    this.txt(UI_LAYOUT.sellBtnX + 12, UI_LAYOUT.sellBtnY + 66, 'Продать\n(60%)', { fontFamily: 'Arial', fontSize: '12px', color: PALETTE.textDark });
+    this.addIcon(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, UI_LAYOUT.sellBtnY + 40, 'ui', 'sell', '🗑', 34);
+    this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, UI_LAYOUT.sellBtnY + 88, 'Продать\n(60%)', { fontFamily: 'Arial', fontSize: '14px', color: PALETTE.textDark, align: 'center' }).setOrigin(0.5, 0);
     sellZone.on('pointerdown', () => {
       if (this.awaitingPerkChoice) return;
       this.sellMode = !this.sellMode;
@@ -682,13 +798,26 @@ class TDScene extends Phaser.Scene {
   }
 
   showBanner(title, subtitle) {
-    const t1 = this.txt(WIDTH / 2, PLAY_H / 2 - 20, title, { fontFamily: 'Arial', fontSize: '36px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(1000);
-    const targets = [t1];
+    const w = Math.min(PLAY_W - 80, 520);
+    const h = subtitle ? 148 : 92;
+    const x = WIDTH / 2 - w / 2, y = PLAY_H / 2 - h / 2;
+    const depthBase = 1000;
+
+    const gfx = this.add.graphics().setDepth(depthBase);
+    this.panelShadow(gfx, x, y, w, h, 20);
+    gfx.fillGradientStyle(PALETTE.panelBgTop, PALETTE.panelBgTop, PALETTE.panelBg, PALETTE.panelBg, 1);
+    gfx.fillRoundedRect(x, y, w, h, 20);
+    gfx.lineStyle(3, PALETTE.accentA, 1).strokeRoundedRect(x, y, w, h, 20);
+
+    const t1 = this.txt(WIDTH / 2, y + (subtitle ? 44 : h / 2), title, { fontFamily: 'Arial', fontSize: '30px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(depthBase + 1);
+    const targets = [gfx, t1];
     if (subtitle) {
-      const t2 = this.txt(WIDTH / 2, PLAY_H / 2 + 30, subtitle, { fontFamily: 'Arial', fontSize: '16px', color: PALETTE.textDark, align: 'center', wordWrap: { width: PLAY_W - 160 } }).setOrigin(0.5).setDepth(1000);
+      const t2 = this.txt(WIDTH / 2, y + 92, subtitle, { fontFamily: 'Arial', fontSize: '16px', color: PALETTE.textDark, align: 'center', wordWrap: { width: w - 60 } }).setOrigin(0.5, 0).setDepth(depthBase + 1);
       targets.push(t2);
     }
-    this.tweens.add({ targets, alpha: { from: 1, to: 0 }, delay: 1700, duration: 900, onComplete: () => targets.forEach(t => t.destroy()) });
+    targets.forEach(o => o.setAlpha(0));
+    this.tweens.add({ targets, alpha: 1, duration: 220, ease: 'Sine.easeOut' });
+    this.tweens.add({ targets, alpha: 0, delay: 2200, duration: 700, onComplete: () => targets.forEach(o => o.destroy()) });
   }
 
   openModalWindow(w, h, depthBase) {
@@ -768,18 +897,18 @@ class TDScene extends Phaser.Scene {
     this.occupied[row][col] = true;
 
     const cx = colX(col), cy = rowY(row);
-    const shadow = this.add.ellipse(cx, cy + 20, 40, 14, 0x2a1f3a, 0.16);
-    const outline = this.add.rectangle(cx, cy, 46, 46, 0xffffff, 0).setStrokeStyle(2, 0xffffff, 0.9);
-    const body = this.add.image(cx, cy, 'characters_' + this.selectedType).setDisplaySize(46, 46);
+    const shadow = this.add.ellipse(cx, cy + 27, 55, 19, 0x2a1f3a, 0.16);
+    const body = this.add.image(cx, cy, 'characters_' + this.selectedType).setDisplaySize(TOWER_BODY, TOWER_BODY);
     const maxHp = TOWER_MAX_HP + this.mult.towerHpBonus;
-    const hpBg = this.add.rectangle(cx, cy + 30, 34, 5, 0xffffff, 0.6).setOrigin(0.5);
-    const hpFg = this.add.rectangle(cx - 17, cy + 30, 34, 5, 0x6fbf6f).setOrigin(0, 0.5);
-    const levelText = this.txt(cx, cy + 20, 'Ур.1', { fontFamily: 'Arial', fontSize: '10px', color: '#ffffff', padding: { top: 2, bottom: 2, left: 2, right: 2 } }).setOrigin(0.5).setDepth(50);
+    const hpBg = this.add.rectangle(cx, cy + 41, 46, 6, 0xffffff, 0.6).setOrigin(0.5);
+    const hpFg = this.add.rectangle(cx - 23, cy + 41, 46, 6, 0x6fbf6f).setOrigin(0, 0.5);
+    const levelText = this.txt(cx, cy + 27, 'Ур.1', { fontFamily: 'Arial', fontSize: '11px', color: '#ffffff', padding: { top: 2, bottom: 2, left: 2, right: 2 } }).setOrigin(0.5).setDepth(50);
     this.towers.push({
-      type: t, x: cx, y: cy, row, col, lastFired: -99999, body, outline, shadow, hp: maxHp, maxHp, hpBg, hpFg,
-      level: 1, levelText, milestonesApplied: new Set(),
+      type: t, x: cx, y: cy, row, col, lastFired: -99999, body, shadow, hp: maxHp, maxHp, hpBg, hpFg,
+      level: 1, levelText, milestonesApplied: new Set(), baseScaleX: body.scaleX, baseScaleY: body.scaleY,
     });
     this.createUpgradeBadge(this.towers[this.towers.length - 1]);
+    this.refreshBuildableMarkers();
     this.updateUIText();
   }
 
@@ -795,8 +924,9 @@ class TDScene extends Phaser.Scene {
     this.showFloatText(tower.x, tower.y - 30, 'Ур. ' + tower.level, '#3f8fae');
     tower.levelText.setText('Ур.' + tower.level);
     const scale = 1 + Math.min(0.35, (tower.level - 1) * 0.018);
-    tower.body.setDisplaySize(46 * scale, 46 * scale);
-    tower.outline.setSize(46 * scale, 46 * scale);
+    tower.body.setDisplaySize(TOWER_BODY * scale, TOWER_BODY * scale);
+    tower.baseScaleX = tower.body.scaleX;
+    tower.baseScaleY = tower.body.scaleY;
 
     const milestone = (TOWER_MILESTONES[tower.type.key] || []).find(m => m.lvl === tower.level);
     if (milestone && !tower.milestonesApplied.has(tower.level)) {
@@ -820,13 +950,14 @@ class TDScene extends Phaser.Scene {
   }
 
   destroyTower(tower) {
-    tower.body.destroy(); tower.outline.destroy(); tower.hpBg.destroy(); tower.hpFg.destroy(); tower.levelText.destroy();
+    tower.body.destroy(); tower.hpBg.destroy(); tower.hpFg.destroy(); tower.levelText.destroy();
     if (tower.shadow) tower.shadow.destroy();
     if (tower.upgBg) tower.upgBg.destroy();
     if (tower.upgLabel) tower.upgLabel.destroy();
     this.occupied[tower.row][tower.col] = false;
     this.towers = this.towers.filter(t => t !== tower);
     for (const e of this.enemies) if (e.attackTarget === tower) e.attackTarget = null;
+    this.refreshBuildableMarkers();
   }
 
   composeWave(wave) {
@@ -892,7 +1023,7 @@ class TDScene extends Phaser.Scene {
   statsFor(typeKey, wave, isBoss) {
     const t = ENEMY_TYPES[typeKey];
     const baseHp = 26 * Math.pow(1.12, wave - 1) * Math.pow(1.15, this.level - 1);
-    const baseSpeed = 48 + Math.min(28, wave * 1.8);
+    const baseSpeed = (48 + Math.min(28, wave * 1.8)) * (TILE / 70);
     const themeHpMult = (this.currentTheme && this.currentTheme.hpMultLevel) || 1;
     let hp = baseHp * t.hpMult * this.mult.enemyHp * themeHpMult;
     let speed = baseSpeed * t.speedMult;
@@ -924,7 +1055,7 @@ class TDScene extends Phaser.Scene {
       type: t, typeKey: item.typeKey, isBoss: item.isBoss,
       attackTarget: null, attackTimer: 0, attackWarned: false,
       elementStatus: null, elementUntil: 0, lastReactionTime: -Infinity, lastFreezeTime: -Infinity,
-      shieldActive: !!t.hasShield, statusBlinkTween: null,
+      shieldActive: !!t.hasShield, statusBlinkTween: null, bobPhase: Math.random() * Math.PI * 2,
     });
   }
 
@@ -944,7 +1075,23 @@ class TDScene extends Phaser.Scene {
   fireProjectile(tower, target) {
     const p = this.add.circle(tower.x, tower.y, 5, tower.type.proj);
     const lvlDmgMult = 1 + (tower.level - 1) * 0.08;
-    this.projectiles.push({ x: tower.x, y: tower.y, target, type: tower.type, body: p, speed: 420, lvlDmgMult });
+    this.projectiles.push({ x: tower.x, y: tower.y, target, type: tower.type, body: p, speed: 420 * RANGE_SCALE, lvlDmgMult });
+  }
+
+  attackPulse(tower) {
+    const body = tower.body;
+    const bx = tower.baseScaleX, by = tower.baseScaleY;
+    this.tweens.killTweensOf(body);
+    body.setScale(bx, by);
+    this.tweens.add({
+      targets: body,
+      scaleX: bx * 0.84,
+      scaleY: by * 1.16,
+      duration: 100,
+      ease: 'Sine.easeOut',
+      yoyo: true,
+      onComplete: () => body.setScale(bx, by),
+    });
   }
 
   computeIncomingDamage(enemy, dmg, isExplosion) {
@@ -1043,7 +1190,7 @@ class TDScene extends Phaser.Scene {
       case 'cryo_hydro': {
         const freezeCd = FREEZE_COOLDOWN_MS * this.mult.freezeCooldown;
         if (themed) {
-          const radius = 100 * radiusMult;
+          const radius = 100 * RANGE_SCALE * radiusMult;
           for (const e2 of [...this.enemies]) {
             const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
             if (d <= radius) { e2.slowMult = 0; e2.slowUntil = time + 1600 * themeBuff * this.mult.statusDuration; e2.lastFreezeTime = time; }
@@ -1067,7 +1214,7 @@ class TDScene extends Phaser.Scene {
         this.showFloatText(enemy.x, enemy.y - 30, 'Плавление!', '#e0973f');
         break;
       case 'electro_hydro': {
-        const radius = 90 * radiusMult;
+        const radius = 90 * RANGE_SCALE * radiusMult;
         this.dealDamage(enemy, Math.round(baseDamage * 0.6 * dmgMult));
         for (const e2 of [...this.enemies]) {
           if (e2 === enemy) continue;
@@ -1078,7 +1225,7 @@ class TDScene extends Phaser.Scene {
         break;
       }
       case 'cryo_electro': {
-        const radius = 80 * radiusMult;
+        const radius = 80 * RANGE_SCALE * radiusMult;
         for (const e2 of [...this.enemies]) {
           const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
           if (d <= radius && this.inField(e2)) this.dealDamage(e2, Math.round(baseDamage * 0.8 * dmgMult), true);
@@ -1087,7 +1234,7 @@ class TDScene extends Phaser.Scene {
         break;
       }
       case 'electro_pyro': {
-        const radius = 110 * radiusMult;
+        const radius = 110 * RANGE_SCALE * radiusMult;
         for (const e2 of [...this.enemies]) {
           const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
           if (d <= radius && this.inField(e2)) this.dealDamage(e2, Math.round(baseDamage * 1.3 * dmgMult), true);
@@ -1100,6 +1247,7 @@ class TDScene extends Phaser.Scene {
 
   triggerGameOver() {
     this.gameOver = true;
+    if (typeof Bridge !== 'undefined') Bridge.gameplayStop();
     this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x2a2038, 0.55).setDepth(4000);
     const w = 420, h = 220, x = WIDTH / 2 - w / 2, y = HEIGHT / 2 - h / 2;
     const g = this.add.graphics().setDepth(4001);
@@ -1163,7 +1311,7 @@ class TDScene extends Phaser.Scene {
             const tower = e.attackTarget;
             tower.hp -= e.type.attackDamage;
             const ratio = Math.max(0, tower.hp / tower.maxHp);
-            tower.hpFg.width = 34 * ratio;
+            tower.hpFg.width = 46 * ratio;
             tower.hpFg.fillColor = ratio > 0.5 ? 0x6fbf6f : (ratio > 0.25 ? 0xf0c14b : 0xe6685f);
             this.showFloatText(tower.x, tower.y - 34, '-' + e.type.attackDamage, '#d9553f');
             this.tweens.add({ targets: tower.body, alpha: 0.35, duration: 110, yoyo: true });
@@ -1188,7 +1336,7 @@ class TDScene extends Phaser.Scene {
         e.x = target.x; e.y = target.y; e.wpIndex += 1;
         if (e.wpIndex >= this.PATH.length) { this.enemyReachedEnd(e); continue; }
       } else { e.x += dx / dist * step; e.y += dy / dist * step; }
-      e.body.setPosition(e.x, e.y);
+      e.body.setPosition(e.x, e.y + Math.sin(time / 260 + e.bobPhase) * Math.min(3, e.radius * 0.18));
       if (e.shadow) e.shadow.setPosition(e.x, e.y + e.radius * 0.7);
       e.hpBg.setPosition(e.x, e.y - e.radius - 8);
       e.hpFg.setPosition(e.x - e.barW / 2, e.y - e.radius - 8);
@@ -1203,7 +1351,7 @@ class TDScene extends Phaser.Scene {
       const effInterval = t.type.fireRate / speedMult;
       if (time - t.lastFired >= effInterval) {
         const target = this.findTarget(t);
-        if (target) { this.fireProjectile(t, target); t.lastFired = time; }
+        if (target) { this.fireProjectile(t, target); t.lastFired = time; this.attackPulse(t); }
       }
     }
 
@@ -1240,8 +1388,34 @@ const config = {
   height: HEIGHT,
   parent: 'game-container',
   backgroundColor: '#f5f1fa',
+  render: { roundPixels: true },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: WIDTH, height: HEIGHT },
   scene: TDScene,
 };
 
-new Phaser.Game(config);
+let activeGame = null;
+let activeScene = null;
+
+function pauseGame() {
+  if (activeScene && activeScene.scene.isActive()) activeScene.scene.pause();
+  if (activeScene && activeScene.sound) activeScene.sound.pauseAll();
+}
+function resumeGame() {
+  if (activeScene && activeScene.scene.isPaused()) activeScene.scene.resume();
+  if (activeScene && activeScene.sound) activeScene.sound.resumeAll();
+  Bridge.gameplayStart();
+}
+
+if (typeof Bridge !== 'undefined') {
+  Bridge.init({ onPause: pauseGame, onResume: resumeGame }).then(() => {
+    activeGame = new Phaser.Game(config);
+    activeGame.events.once('ready', () => {
+      activeScene = activeGame.scene.getScene('TDScene');
+      Bridge.gameplayStart();
+    });
+  });
+} else {
+  console.warn('Bridge не найден, запускаю игру напрямую без платформенного SDK.');
+  activeGame = new Phaser.Game(config);
+  activeGame.events.once('ready', () => { activeScene = activeGame.scene.getScene('TDScene'); });
+}
