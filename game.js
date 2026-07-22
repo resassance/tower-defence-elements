@@ -1,11 +1,11 @@
-const TILE = 96;
-const TOWER_BODY = 64;
+const TILE = 64;
+const TOWER_BODY = 44;
 const RANGE_SCALE = TILE / 70;
-const COLS = 16;
-const ROWS = 9;
+const COLS = 11;
+const ROWS = 6;
 const PLAY_W = COLS * TILE;
 const PLAY_H = ROWS * TILE;
-const UI_H = 196;
+const UI_H = 156;
 const WIDTH = PLAY_W;
 const HEIGHT = PLAY_H + UI_H;
 
@@ -22,7 +22,8 @@ const SHIELD_DAMAGE_REDUCTION = 0.15;
 const TOWER_MAX_LEVEL = 20;
 const DRAG_THRESHOLD = 10;
 const HUD_H = 60;
-const MAX_TOWERS = 24;
+const MAX_TOWERS = 10;
+const TOWER_TYPE_COOLDOWN_MS = 10000;
 
 const ZONE_PATH_MAX = TILE * 0.5;
 const ZONE_BORDER_MAX = TILE * 1.45;
@@ -68,7 +69,7 @@ const ASSET_MANIFEST = {
 
 const ICON_MANIFEST = {
   elements: { hydro: 'assets/icons/elements/hydroicon.png', cryo: 'assets/icons/elements/cryoicon.png', pyro: 'assets/icons/elements/pyroicon.png', electro: 'assets/icons/elements/electroicon.png' },
-  themes: { swift: 'assets/icons/themes/swift.png', armored: 'assets/icons/themes/armored.png', standard: 'assets/icons/themes/standart.png', swarm: 'assets/icons/themes/swarm.png', exotic: 'assets/icons/themes/exotic.png' },
+  themes: { swift: 'assets/icons/themes/swift.png', armored: 'assets/icons/themes/armored.png', standard: 'assets/icons/themes/standart.png', swarm: 'assets/icons/themes/swarm.png', melt: 'assets/icons/themes/exotic.png', steam: 'assets/icons/themes/exotic.png' },
   perks: { goldrush: 'assets/icons/perks/goldrush.png', sharp: 'assets/icons/perks/sharp.png', haste: 'assets/icons/perks/haste.png', walls: 'assets/icons/perks/walls.png', discount: 'assets/icons/perks/discount.png', swarm: 'assets/icons/perks/swarm.png' },
   ui: { sell: 'assets/icons/ui/sell.png' },
 };
@@ -84,18 +85,18 @@ const TOWER_TYPES = {
 const TOWER_MAX_HP = 150;
 
 const ENEMY_TYPES = {
-  grunt:    { name:'Марионетка', hpMult:1,    speedMult:1,    reward:1,   livesCost:1, color:0xa87fd9, ring:0xd9c2f0, radius:19 },
-  runner:   { name:'Рывок',      hpMult:0.5,  speedMult:1.7,  reward:0.8, livesCost:1, color:0xe86fa0, ring:0xffc2dc, radius:15 },
-  shielded: { name:'Щитовик',    hpMult:0.5,  speedMult:0.7,  reward:1.6, livesCost:2, color:0x7a5fb8, ring:0xb8a8dc, radius:25, hasShield:true },
-  wrecker:  { name:'Крушитель',  hpMult:1.3,  speedMult:0.8,  reward:1.7, livesCost:1, color:0xe85f52, ring:0xffb0a8, radius:21, attacksTowers:true, attackDamage:10, attackRate:900 },
+  grunt:    { name:'Марионетка', hpMult:1,    speedMult:1,    reward:1,   livesCost:1, color:0xa87fd9, ring:0xd9c2f0, radius:13 },
+  runner:   { name:'Рывок',      hpMult:0.5,  speedMult:1.7,  reward:0.8, livesCost:1, color:0xe86fa0, ring:0xffc2dc, radius:10 },
+  shielded: { name:'Щитовик',    hpMult:0.5,  speedMult:0.7,  reward:1.6, livesCost:2, color:0x7a5fb8, ring:0xb8a8dc, radius:17, hasShield:true },
+  wrecker:  { name:'Крушитель',  hpMult:1.3,  speedMult:0.8,  reward:1.7, livesCost:1, color:0xe85f52, ring:0xffb0a8, radius:14, attacksTowers:true, attackDamage:10, attackRate:900 },
 };
 
 const TOWER_MILESTONES = {
   blade: [
-    { lvl:5,  name:'Боевой инстинкт',   desc:'+8% урона всем башням',            apply:s=>{ s.mult.damage *= 1.08; } },
-    { lvl:10, name:'Быстрые руки',      desc:'+8% скорострельности всем башням', apply:s=>{ s.mult.fireRate *= 1.08; } },
-    { lvl:15, name:'Смертельная точность', desc:'+10% урона всем башням',        apply:s=>{ s.mult.damage *= 1.10; } },
-    { lvl:20, name:'Клинок судьбы',     desc:'+15% скорострельности всем башням', apply:s=>{ s.mult.fireRate *= 1.15; } },
+    { lvl:5,  name:'Боевой инстинкт',   desc:'+8% урона всем тян',            apply:s=>{ s.mult.damage *= 1.08; } },
+    { lvl:10, name:'Быстрые руки',      desc:'+8% скорострельности всем тян', apply:s=>{ s.mult.fireRate *= 1.08; } },
+    { lvl:15, name:'Смертельная точность', desc:'+10% урона всем тян',        apply:s=>{ s.mult.damage *= 1.10; } },
+    { lvl:20, name:'Клинок судьбы',     desc:'+15% скорострельности всем тян', apply:s=>{ s.mult.fireRate *= 1.15; } },
   ],
   cryo: [
     { lvl:5,  name:'Ледяное дыхание', desc:'КД заморозки -20%',                    apply:s=>{ s.mult.freezeCooldown *= 0.8; } },
@@ -116,27 +117,55 @@ const TOWER_MILESTONES = {
     { lvl:20, name:'Прилив',           desc:'КД реакций ещё -15%',                    apply:s=>{ s.mult.reactionCooldown *= 0.85; } },
   ],
   electro: [
-    { lvl:5,  name:'Разряд',            desc:'+8% скорострельности всем башням', apply:s=>{ s.mult.fireRate *= 1.08; } },
+    { lvl:5,  name:'Разряд',            desc:'+8% скорострельности всем тян', apply:s=>{ s.mult.fireRate *= 1.08; } },
     { lvl:10, name:'Высокое напряжение', desc:'Урон реакций +15%',               apply:s=>{ s.mult.reactionDamage *= 1.15; } },
     { lvl:15, name:'Электросеть',       desc:'Радиус взрывных реакций +20%',     apply:s=>{ s.mult.reactionRadius *= 1.2; } },
-    { lvl:20, name:'Шторм молний',      desc:'+15% дальности всем башням',       apply:s=>{ s.mult.range *= 1.15; } },
+    { lvl:20, name:'Шторм молний',      desc:'+15% дальности всем тян',       apply:s=>{ s.mult.range *= 1.15; } },
   ],
 };
 
 const IS_MOBILE = typeof window !== 'undefined' && (window.innerWidth < 820 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ''));
 
 const UI_LAYOUT = (() => {
-  const marginX = 20, gap = 14, waveBtnW = 300, slots = 6;
-  const cardW = Math.round((PLAY_W - marginX * 2 - waveBtnW - gap * slots) / slots);
-  const cardH = 140;
-  const cardStartX = marginX, cardY = PLAY_H + 26;
-  const sellBtnX = cardStartX + 5 * (cardW + gap);
-  const waveBtnX = sellBtnX + cardW + gap;
+  const marginX = IS_MOBILE ? 6 : 16;
+  const gap = IS_MOBILE ? 6 : 10;
+  const slots = 6;
+  
+  // На мобильных волна кнопка занимает отдельную строку, на десктопе - в ряду
+  const useCompactLayout = IS_MOBILE;
+  
+  let cardW, cardH, cardStartX, cardY, sellBtnX, waveBtnX, waveBtnW, waveBtnH, waveBtnY;
+  
+  if (useCompactLayout) {
+    // Компактный мобильный layout: карточки в одну линию, волна кнопка отдельно
+    cardW = Math.round((PLAY_W - marginX * 2 - gap * 7) / 6);
+    cardH = 100;
+    cardStartX = marginX;
+    cardY = PLAY_H + 10;
+    sellBtnX = cardStartX + 5 * (cardW + gap);
+    // Волна кнопка - отдельная строка справа
+    waveBtnW = PLAY_W - sellBtnX - cardW - marginX;
+    waveBtnX = sellBtnX + cardW + gap;
+    waveBtnH = cardH;
+    waveBtnY = cardY;
+  } else {
+    // Десктопный layout: всё в одном ряду (уменьшенная кнопка волны для освобождения места)
+    waveBtnW = 160;
+    cardW = Math.round((PLAY_W - marginX * 2 - waveBtnW - gap * slots) / slots);
+    cardH = 116;
+    cardStartX = marginX;
+    cardY = PLAY_H + 16;
+    sellBtnX = cardStartX + 5 * (cardW + gap);
+    waveBtnX = sellBtnX + cardW + gap;
+    waveBtnH = 76;
+    waveBtnY = PLAY_H + UI_H / 2 + 10;
+  }
+  
   return {
     cardW, cardH, cardGap: gap, cardStartX, cardY,
     sellBtnX, sellBtnW: cardW, sellBtnH: cardH, sellBtnY: cardY,
-    waveBtnX, waveBtnW, waveBtnH: 82, waveBtnY: PLAY_H + UI_H / 2,
-    drawerPeek: 54,
+    waveBtnX, waveBtnW, waveBtnH, waveBtnY,
+    useCompactLayout,
   };
 })();
 
@@ -144,10 +173,10 @@ const UI_SCALE = IS_MOBILE ? 1.35 : 1.15;
 
 const PERKS = [
   { id:'goldrush',  name:'Золотая жила',    desc:'+40% золота за волны и убийства',            icon:'💰', apply:s=>{ s.mult.gold *= 1.4; } },
-  { id:'sharp',     name:'Заточка клинков', desc:'+20% урона всех башен',                        icon:'⚔️', apply:s=>{ s.mult.damage *= 1.2; } },
-  { id:'haste',     name:'Прилив сил',      desc:'+20% скорострельности башен',                  icon:'💨', apply:s=>{ s.mult.fireRate *= 1.2; } },
-  { id:'walls',     name:'Крепкие стены',   desc:'+60 HP всем новым башням',                     icon:'🛡️', apply:s=>{ s.mult.towerHpBonus += 60; } },
-  { id:'discount',  name:'Скидка мастера',  desc:'Башни дешевле на 15%',                         icon:'🏷️', apply:s=>{ s.mult.cost *= 0.85; s.refreshCostLabels(); } },
+  { id:'sharp',     name:'Заточка клинков', desc:'+20% урона всех тян',                        icon:'⚔️', apply:s=>{ s.mult.damage *= 1.2; } },
+  { id:'haste',     name:'Прилив сил',      desc:'+20% скорострельности тян',                  icon:'💨', apply:s=>{ s.mult.fireRate *= 1.2; } },
+  { id:'walls',     name:'Крепкие стены',   desc:'+60 HP всем новым тян',                     icon:'🛡️', apply:s=>{ s.mult.towerHpBonus += 60; } },
+  { id:'discount',  name:'Скидка мастера',  desc:'Тян дешевле на 15%',                         icon:'🏷️', apply:s=>{ s.mult.cost *= 0.85; s.refreshCostLabels(); } },
   { id:'swarm',     name:'Рой вместо силы', desc:'Врагов +30% числом, но у них -25% HP',         icon:'🐝', apply:s=>{ s.mult.enemyCount *= 1.3; s.mult.enemyHp *= 0.75; } },
 ];
 
@@ -156,7 +185,8 @@ const THEMES = [
   { id:'armored',  name:'Бронированный рубеж',  desc:'Много Щитовиков с защитным барьером.',            icon:'💥', reactionName:'Перегрузка',            reactionKeys:['electro_pyro'],            buffMult:1.6, enemyBias:{ shielded:4, grunt:1 } },
   { id:'standard', name:'Обычный натиск',       desc:'Стандартная пехота эфириалов.',                   icon:'🔗', reactionName:'Сверхпроводник',        reactionKeys:['cryo_electro'],            buffMult:1.7, enemyBias:{ grunt:5 } },
   { id:'swarm',    name:'Рой мелочи',           desc:'Огромное число слабых, но многочисленных мобов.', icon:'⚡', reactionName:'Наэлектризованность',   reactionKeys:['electro_hydro'],           buffMult:1.8, enemyBias:{ grunt:5, runner:2 }, countMult:1.4, hpMultLevel:0.7 },
-  { id:'exotic',   name:'Экзотическая угроза',  desc:'Тяжёлая смешанная волна.',                        icon:'🔥', reactionName:'Вскипание и Плавление', reactionKeys:['hydro_pyro','cryo_pyro'],  buffMult:1.6, enemyBias:{ shielded:2, wrecker:2, grunt:2 } },
+  { id:'melt',     name:'Ледяной пожар',        desc:'Огонь и лёд сталкиваются — эфириалы то леденеют, то тают.', icon:'🧊', reactionName:'Таяние', reactionKeys:['cryo_pyro'],  buffMult:1.7, enemyBias:{ shielded:3, grunt:3 } },
+  { id:'steam',    name:'Паровой прорыв',       desc:'Влажная волна легко превращается в обжигающий пар.',      icon:'💨', reactionName:'Пар',    reactionKeys:['hydro_pyro'], buffMult:1.7, enemyBias:{ wrecker:2, runner:2, grunt:2 } },
 ];
 
 function generatePath() {
@@ -201,6 +231,13 @@ class TDScene extends Phaser.Scene {
     this.load.on('loaderror', file => this.missingKeys.add(file.key));
     Object.entries(ASSET_MANIFEST).forEach(([group, entries]) => Object.entries(entries).forEach(([name, path]) => this.load.image(group + '_' + name, path)));
     Object.entries(ICON_MANIFEST).forEach(([group, entries]) => Object.entries(entries).forEach(([name, path]) => this.load.image('icon_' + group + '_' + name, path)));
+    
+    // Отключаем сглаживание для всех текстур при загрузке
+    this.textures.on('add', (texture) => {
+      if (texture && texture.baseTexture) {
+        texture.baseTexture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+    });
   }
 
   create() {
@@ -228,6 +265,7 @@ class TDScene extends Phaser.Scene {
     this.gameOver = false;
     this.sellMode = false;
     this.dragState = null;
+    this.typeCooldownUntil = {};
 
     this.mult = {
       damage: 1, gold: 1, fireRate: 1, towerHpBonus: 0, cost: 1, enemyCount: 1, enemyHp: 1,
@@ -543,19 +581,22 @@ class TDScene extends Phaser.Scene {
   drawTopHud() {
     const HUD_DEPTH = 300;
     const chipY = 10, chipH = HUD_H - 20;
-    const chips = [
-      { key: 'gold', x: 16, w: 118 },
-      { key: 'lives', x: 146, w: 104 },
-      { key: 'wave', x: 262, w: 104 },
-      { key: 'level', x: 378, w: 104 },
-      { key: 'towers', x: 940, w: 164 },
+    const marginX = 12, gapC = 6;
+    // Уменьшенные размеры плиток для предотвращения наезжания
+    const leftDefs = [
+      { key: 'gold', w: 90 }, { key: 'lives', w: 82 }, { key: 'wave', w: 82 }, { key: 'level', w: 82 },
     ];
+    let cursorX = marginX;
+    const chips = leftDefs.map(d => { const c = { key: d.key, x: cursorX, w: d.w }; cursorX += d.w + gapC; return c; });
+    const towersW = 110;
+    const towersX = PLAY_W - marginX - towersW;
+    chips.push({ key: 'towers', x: towersX, w: towersW });
     this.tooltipContent = {
-      gold: 'Золото — трать на новые башни и их прокачку.',
+      gold: 'Золото — трать на новых тян и их прокачку.',
       lives: 'Жизни. Если эфириал доходит до конца пути — теряется жизнь. 0 жизней = поражение.',
       wave: 'Текущая волна врагов в этом уровне (всего ' + WAVES_PER_LEVEL + ' волн на уровень).',
       level: 'Номер уровня. Каждые ' + WAVES_PER_LEVEL + ' волн карта меняется и можно выбрать улучшение.',
-      towers: 'Сколько башен построено. Лимит на поле: ' + MAX_TOWERS + '.',
+      towers: 'Сколько тян размещено. Лимит на поле: ' + MAX_TOWERS + '. КД между установкой тян одного типа: 10с.',
     };
 
     const bg = this.add.graphics().setDepth(HUD_DEPTH);
@@ -570,13 +611,13 @@ class TDScene extends Phaser.Scene {
       this.panelShadow(g, chip.x, chipY, chip.w, chipH, 12);
       g.fillStyle(0xf6f0fb, 1).fillRoundedRect(chip.x, chipY, chip.w, chipH, 12);
       g.lineStyle(1.5, PALETTE.panelStroke, 1).strokeRoundedRect(chip.x, chipY, chip.w, chipH, 12);
-      this.hudTexts[chip.key] = this.txt(chip.x + 14, chipY + chipH / 2, '', { fontFamily: 'Arial', fontSize: '17px', color: PALETTE.textDark }).setOrigin(0, 0.5).setDepth(HUD_DEPTH + 1);
+      this.hudTexts[chip.key] = this.txt(chip.x + chip.w / 2, chipY + chipH / 2, '', { fontFamily: 'Arial', fontSize: '17px', color: PALETTE.textDark, align: 'center', wordWrap: { width: chip.w - 8 } }).setOrigin(0.5, 0.5).setDepth(HUD_DEPTH + 1);
       const zone = this.add.zone(chip.x, chipY, chip.w, chipH).setOrigin(0, 0).setInteractive({ useHandCursor: true }).setDepth(HUD_DEPTH + 2);
       zone.on('pointerover', () => this.showTooltip(chip.x + chip.w / 2, chipY + chipH + 8, this.tooltipContent[chip.key]));
       zone.on('pointerout', () => this.hideTooltip());
     });
 
-    this.themeChipX = 500; this.themeChipY = chipY; this.themeChipW = 420; this.themeChipH = chipH;
+    this.themeChipX = cursorX; this.themeChipY = chipY; this.themeChipW = Math.max(160, towersX - gapC - cursorX); this.themeChipH = chipH;
     this.themeChipGfx = this.add.graphics().setDepth(HUD_DEPTH);
     this.themeBuffText = this.txt(this.themeChipX + 16, chipY + chipH / 2, '', { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textAccent }).setOrigin(0, 0.5).setDepth(HUD_DEPTH + 1);
     this.themeChipZone = this.add.zone(this.themeChipX, chipY, this.themeChipW, chipH).setOrigin(0, 0).setDepth(HUD_DEPTH + 2);
@@ -640,34 +681,21 @@ class TDScene extends Phaser.Scene {
     const { sellBtnX: x, sellBtnY: y, sellBtnW: w, sellBtnH: h } = UI_LAYOUT;
     gfx.clear();
     this.panelShadow(gfx, x, y, w, h, 14);
-    if (active) gfx.fillGradientStyle(0xffe4e0, 0xffe4e0, 0xffd0ca, 0xffd0ca, 1);
-    else gfx.fillGradientStyle(PALETTE.panelBgTop, PALETTE.panelBgTop, PALETTE.panelBg, PALETTE.panelBg, 1);
+    // Бледно-красный цвет для кнопки продажи
+    if (active) {
+      gfx.fillGradientStyle(0xffe0d8, 0xffe0d8, 0xffccc4, 0xffccc4, 1);
+    } else {
+      gfx.fillGradientStyle(0xfff0ec, 0xfff0ec, 0xffe8e4, 0xffe8e4, 1);
+    }
     gfx.fillRoundedRect(x, y, w, h, 14);
-    gfx.lineStyle(active ? 2.5 : 2, active ? 0xe0665a : PALETTE.panelStroke, 1).strokeRoundedRect(x, y, w, h, 14);
+    gfx.lineStyle(active ? 2.5 : 2, active ? 0xc98070 : 0xf0c0b8, 1).strokeRoundedRect(x, y, w, h, 14);
     gfx.fillStyle(0xffffff, 0.45).fillRoundedRect(x + 3, y + 3, w - 6, Math.min(h * 0.32, 26), 10);
-  }
-
-  redrawDrawerMask(visibleH) {
-    this.drawerMaskGfx.clear();
-    this.drawerMaskGfx.fillStyle(0xffffff, 1).fillRect(0, UI_LAYOUT.cardY, PLAY_W, visibleH);
-  }
-
-  setDrawerExpanded(expanded) {
-    this.drawerExpanded = expanded;
-    this.drawHandle();
-    const state = { h: expanded ? UI_LAYOUT.drawerPeek : UI_LAYOUT.cardH };
-    this.tweens.add({
-      targets: state,
-      h: expanded ? UI_LAYOUT.cardH : UI_LAYOUT.drawerPeek,
-      duration: 260,
-      ease: 'Sine.easeOut',
-      onUpdate: () => this.redrawDrawerMask(state.h),
-    });
   }
 
   drawBottomUI() {
     this.towerButtons = {};
-    this.towerDrawer = this.add.container(0, 0);
+    this.cooldownGfx = {};
+    this.cooldownText = {};
     const keys = Object.keys(TOWER_TYPES);
     keys.forEach((key, i) => {
       const t = TOWER_TYPES[key];
@@ -679,14 +707,19 @@ class TDScene extends Phaser.Scene {
       this.drawCardPanel(gfx, bx, by, bw, bh, false);
       const zone = this.add.zone(bx, by, bw, bh).setOrigin(0, 0).setInteractive({ useHandCursor: true });
 
-      const icon = this.add.image(bx + bw / 2, by + 40, 'characters_' + key).setDisplaySize(58, 58);
-      const elIcon = t.element ? this.addIcon(bx + bw - 22, by + 18, 'elements', t.element, ELEMENT_ICON[t.element], 20) : null;
-      const nameText = this.txt(bx + bw / 2, by + 78, t.name, { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textDark }).setOrigin(0.5, 0);
-      this.costTexts[key] = this.txt(bx + bw / 2, by + 104, '💰 ' + this.effectiveCost(key), { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textAccent }).setOrigin(0.5, 0);
+      this.add.image(bx + bw / 2, by + 34, 'characters_' + key).setDisplaySize(48, 48);
+      if (t.element) this.addIcon(bx + bw - 18, by + 14, 'elements', t.element, ELEMENT_ICON[t.element], 18);
+      this.txt(bx + bw / 2, by + 62, t.name, { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textDark }).setOrigin(0.5, 0);
+      this.costTexts[key] = this.txt(bx + bw / 2, by + 86, '💰 ' + this.effectiveCost(key), { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textAccent }).setOrigin(0.5, 0);
+
+      const cdGfx = this.add.graphics().setDepth(60).setVisible(false);
+      const cdText = this.txt(bx + bw / 2, by + bh / 2, '', { fontFamily: 'Arial', fontSize: '20px', color: '#ffffff' }).setOrigin(0.5).setDepth(61).setVisible(false);
+      this.cooldownGfx[key] = { gfx: cdGfx, x: bx, y: by, w: bw, h: bh };
+      this.cooldownText[key] = cdText;
 
       zone.on('pointerdown', pointer => {
         if (this.awaitingPerkChoice) return;
-        if (IS_MOBILE && !this.drawerExpanded) { this.setDrawerExpanded(true); return; }
+        if ((this.typeCooldownUntil[key] || 0) > this.time.now) return;
         this.sellMode = false;
         this.drawSellPanel(false);
         this.dragState = { key, startX: pointer.x, startY: pointer.y, wasSelected: this.selectedType === key, ghost: null };
@@ -694,34 +727,15 @@ class TDScene extends Phaser.Scene {
       zone.on('pointerover', () => { if (this.selectedType !== key) { this.drawCardPanel(gfx, bx, by, bw, bh, false); gfx.lineStyle(2, PALETTE.accentA, 0.9).strokeRoundedRect(bx, by, bw, bh, 14); } });
       zone.on('pointerout', () => this.refreshButtonHighlight());
       this.towerButtons[key] = gfx;
-      this.towerDrawer.add([gfx, zone, icon, ...(elIcon ? [elIcon] : []), nameText, this.costTexts[key]]);
     });
-
-    this.drawerMaskGfx = this.make.graphics({ x: 0, y: 0 }, false);
-    this.towerDrawer.setMask(new Phaser.Display.Masks.GeometryMask(this, this.drawerMaskGfx));
-    this.drawerExpanded = !IS_MOBILE;
-    this.redrawDrawerMask(this.drawerExpanded ? UI_LAYOUT.cardH : UI_LAYOUT.drawerPeek);
-
-    const handleW = 90, handleH = 26;
-    const handleX = UI_LAYOUT.cardStartX + (5 * UI_LAYOUT.cardW + 4 * UI_LAYOUT.cardGap) / 2 - handleW / 2;
-    const handleY = UI_LAYOUT.cardY - handleH - 4;
-    this.drawerHandleGfx = this.add.graphics().setDepth(400);
-    this.drawerHandleText = this.txt(handleX + handleW / 2, handleY + handleH / 2, '▲ Героини', { fontFamily: 'Arial', fontSize: '13px', color: '#ffffff' }).setOrigin(0.5).setDepth(401);
-    const handleZone = this.add.zone(handleX, handleY, handleW, handleH).setOrigin(0, 0).setInteractive({ useHandCursor: true }).setDepth(402);
-    handleZone.on('pointerdown', () => this.setDrawerExpanded(!this.drawerExpanded));
-    this.drawHandle = () => {
-      this.drawerHandleGfx.clear();
-      this.drawerHandleGfx.fillStyle(0x8a5fb0, 0.92).fillRoundedRect(handleX, handleY, handleW, handleH, 13);
-      this.drawerHandleText.setText(this.drawerExpanded ? '▼ Героини' : '▲ Героини');
-    };
-    this.drawHandle();
-    if (!IS_MOBILE) { this.drawerHandleGfx.setVisible(false); this.drawerHandleText.setVisible(false); handleZone.setVisible(false).disableInteractive(); }
 
     this.sellGfx = this.add.graphics();
     this.drawSellPanel(false);
     const sellZone = this.add.zone(UI_LAYOUT.sellBtnX, UI_LAYOUT.sellBtnY, UI_LAYOUT.sellBtnW, UI_LAYOUT.sellBtnH).setOrigin(0, 0).setInteractive({ useHandCursor: true });
-    this.addIcon(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, UI_LAYOUT.sellBtnY + 40, 'ui', 'sell', '🗑', 34);
-    this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, UI_LAYOUT.sellBtnY + 88, 'Продать\n(60%)', { fontFamily: 'Arial', fontSize: '14px', color: PALETTE.textDark, align: 'center' }).setOrigin(0.5, 0);
+    this.addIcon(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, UI_LAYOUT.sellBtnY + 22, 'ui', 'sell', '🗑', 30);
+    // Двухстрочный текст для продажи - внутри кнопки
+    this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, UI_LAYOUT.sellBtnY + 36, 'Продать', { fontFamily: 'Arial', fontSize: '11px', color: PALETTE.textDark, align: 'center' }).setOrigin(0.5, 1);
+    this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, UI_LAYOUT.sellBtnY + 48, '60%', { fontFamily: 'Arial', fontSize: '10px', color: PALETTE.textMuted, align: 'center' }).setOrigin(0.5, 0);
     sellZone.on('pointerdown', () => {
       if (this.awaitingPerkChoice) return;
       this.sellMode = !this.sellMode;
@@ -737,7 +751,9 @@ class TDScene extends Phaser.Scene {
     this.waveGfx.lineStyle(2, 0xb79ae0, 1).strokeRoundedRect(wbx, wby, UI_LAYOUT.waveBtnW, UI_LAYOUT.waveBtnH, 16);
     this.waveGfx.fillStyle(0xffffff, 0.45).fillRoundedRect(wbx + 3, wby + 3, UI_LAYOUT.waveBtnW - 6, 12, 10);
     const waveZone = this.add.zone(wbx, wby, UI_LAYOUT.waveBtnW, UI_LAYOUT.waveBtnH).setOrigin(0, 0).setInteractive({ useHandCursor: true });
-    this.waveButtonText = this.txt(UI_LAYOUT.waveBtnX + UI_LAYOUT.waveBtnW / 2, UI_LAYOUT.waveBtnY, '', { fontFamily: 'Arial', fontSize: '16px', color: PALETTE.textDark }).setOrigin(0.5);
+    // Двухстрочный текст для кнопки волны
+    this.waveButtonText = this.txt(UI_LAYOUT.waveBtnX + UI_LAYOUT.waveBtnW / 2, UI_LAYOUT.waveBtnY - 8, '', { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textDark, align: 'center' }).setOrigin(0.5, 1);
+    this.waveCountdownText = this.txt(UI_LAYOUT.waveBtnX + UI_LAYOUT.waveBtnW / 2, UI_LAYOUT.waveBtnY + 10, '', { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textMuted, align: 'center' }).setOrigin(0.5, 0);
     waveZone.on('pointerdown', () => { if (!this.waveInProgress && !this.awaitingPerkChoice) this.startWave(); });
 
     this.updateUIText();
@@ -756,7 +772,7 @@ class TDScene extends Phaser.Scene {
     this.hudTexts.lives.setText('❤ ' + this.lives);
     this.hudTexts.wave.setText('🌊 ' + this.wave);
     this.hudTexts.level.setText('🗺 Ур.' + this.level);
-    this.hudTexts.towers.setText('🏗 Башни: ' + this.towers.length + '/' + MAX_TOWERS);
+    this.hudTexts.towers.setText('🏗 Тян: ' + this.towers.length + '/' + MAX_TOWERS);
     if (this.currentTheme) {
       this.themeBuffText.setText(this.currentTheme.icon + ' ' + this.currentTheme.reactionName + ' ×' + this.currentTheme.buffMult);
       this.themeChipGfx.clear();
@@ -835,16 +851,24 @@ class TDScene extends Phaser.Scene {
   }
 
   showThemeWarning(theme, onDone) {
-    const modal = this.openModalWindow(760, 380, 3000);
+    const modal = this.openModalWindow(520, 360, 3000);
     const { overlay, x, y, w } = modal;
     const cx = x + w / 2;
     const icon = this.addIcon(cx, y + 66, 'themes', theme.id, theme.icon, 56);
     const title = this.txt(cx, y + 118, 'Тематический уровень: ' + theme.name, { fontFamily: 'Arial', fontSize: '24px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(3002);
     const desc = this.txt(cx, y + 168, theme.desc, { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textDark, align: 'center', wordWrap: { width: w - 100 } }).setOrigin(0.5, 0).setDepth(3002);
-    const buff = this.txt(cx, y + 232, 'Бафф уровня: ' + theme.reactionName + ' сильнее в ' + theme.buffMult + ' раза (+дальность башням этой стихии)', { fontFamily: 'Arial', fontSize: '14px', color: '#3f8fae', align: 'center', wordWrap: { width: w - 100 } }).setOrigin(0.5, 0).setDepth(3002);
+    const buff = this.txt(cx, y + 232, 'Бафф уровня: ' + theme.reactionName + ' сильнее в ' + theme.buffMult + ' раза (+дальность тян этой стихии)', { fontFamily: 'Arial', fontSize: '14px', color: '#3f8fae', align: 'center', wordWrap: { width: w - 100 } }).setOrigin(0.5, 0).setDepth(3002);
     overlay.push(icon, title, desc, buff);
 
-    const bw = 200, bh = 50, bx = cx - bw / 2, by = y + 300;
+    const elements = themeAffectedElements(theme);
+    const elIconSize = 34, elGap = 12;
+    const elStartX = cx - (elements.length * elIconSize + (elements.length - 1) * elGap) / 2 + elIconSize / 2;
+    elements.forEach((el, i) => {
+      const elIcon = this.addIcon(elStartX + i * (elIconSize + elGap), y + 270, 'elements', el, ELEMENT_ICON[el], elIconSize);
+      overlay.push(elIcon);
+    });
+
+    const bw = 200, bh = 50, bx = cx - bw / 2, by = y + 330;
     const btnG = this.add.graphics().setDepth(3002);
     btnG.fillStyle(0xe4d8f7, 1).fillRoundedRect(bx, by, bw, bh, 14);
     btnG.lineStyle(2, 0xb79ae0, 1).strokeRoundedRect(bx, by, bw, bh, 14);
@@ -855,15 +879,15 @@ class TDScene extends Phaser.Scene {
   }
 
   showPerkChoice(onDone) {
-    const modal = this.openModalWindow(940, 400, 3000);
+    const modal = this.openModalWindow(640, 360, 3000);
     const { overlay, x, y, w } = modal;
     const cx = x + w / 2;
-    const title = this.txt(cx, y + 40, 'Выбери улучшение', { fontFamily: 'Arial', fontSize: '28px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(3002);
+    const title = this.txt(cx, y + 30, 'Выбери улучшение', { fontFamily: 'Arial', fontSize: '22px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(3002);
     overlay.push(title);
 
     const shuffled = Phaser.Utils.Array.Shuffle([...PERKS]);
     const choices = shuffled.slice(0, 3);
-    const cardW = 260, cardH = 240, gap = 30;
+    const cardW = 180, cardH = 200, gap = 16;
     const totalW = choices.length * cardW + (choices.length - 1) * gap;
     const startX = cx - totalW / 2;
     const cardY = y + 90;
@@ -874,9 +898,9 @@ class TDScene extends Phaser.Scene {
       g.fillStyle(0xf6f0fb, 1).fillRoundedRect(bx, cardY, cardW, cardH, 16);
       g.lineStyle(2, PALETTE.panelStroke, 1).strokeRoundedRect(bx, cardY, cardW, cardH, 16);
       const zone = this.add.zone(bx, cardY, cardW, cardH).setOrigin(0, 0).setInteractive({ useHandCursor: true }).setDepth(3003);
-      const icon = this.addIcon(bx + cardW / 2, cardY + 54, 'perks', perk.id, perk.icon, 46);
-      const name = this.txt(bx + cardW / 2, cardY + 108, perk.name, { fontFamily: 'Arial', fontSize: '17px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(3003);
-      const desc = this.txt(bx + cardW / 2, cardY + 152, perk.desc, { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textMuted, align: 'center', wordWrap: { width: cardW - 30 } }).setOrigin(0.5, 0).setDepth(3003);
+      const icon = this.addIcon(bx + cardW / 2, cardY + 40, 'perks', perk.id, perk.icon, 36);
+      const name = this.txt(bx + cardW / 2, cardY + 78, perk.name, { fontFamily: 'Arial', fontSize: '14px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(3003);
+      const desc = this.txt(bx + cardW / 2, cardY + 112, perk.desc, { fontFamily: 'Arial', fontSize: '11px', color: PALETTE.textMuted, align: 'center', wordWrap: { width: cardW - 16 } }).setOrigin(0.5, 0).setDepth(3003);
       overlay.push(g, zone, icon, name, desc);
 
       zone.on('pointerover', () => { g.clear(); g.fillStyle(0xf6f0fb, 1).fillRoundedRect(bx, cardY, cardW, cardH, 16); g.lineStyle(2, PALETTE.panelStrokeSelected, 1).strokeRoundedRect(bx, cardY, cardW, cardH, 16); });
@@ -888,13 +912,16 @@ class TDScene extends Phaser.Scene {
   tryPlaceTower(row, col) {
     if (!this.selectedType) return;
     if (!this.buildable[row][col] || this.occupied[row][col]) return;
-    if (this.towers.length >= MAX_TOWERS) { this.showFloatText(colX(col), rowY(row) - 20, 'Лимит башен: ' + MAX_TOWERS, '#d9553f'); return; }
+    if (this.towers.length >= MAX_TOWERS) { this.showFloatText(colX(col), rowY(row) - 20, 'Лимит тян: ' + MAX_TOWERS, '#d9553f'); return; }
+    const cdLeft = (this.typeCooldownUntil[this.selectedType] || 0) - this.time.now;
+    if (cdLeft > 0) { this.showFloatText(colX(col), rowY(row) - 20, 'КД: ' + Math.ceil(cdLeft / 1000) + 'с', '#d9553f'); return; }
     const t = TOWER_TYPES[this.selectedType];
     const cost = this.effectiveCost(this.selectedType);
     if (this.gold < cost) { this.showFloatText(colX(col), rowY(row) - 20, 'Не хватает золота', '#d9553f'); return; }
 
     this.gold -= cost;
     this.occupied[row][col] = true;
+    this.typeCooldownUntil[this.selectedType] = this.time.now + TOWER_TYPE_COOLDOWN_MS;
 
     const cx = colX(col), cy = rowY(row);
     const shadow = this.add.ellipse(cx, cy + 27, 55, 19, 0x2a1f3a, 0.16);
@@ -992,7 +1019,7 @@ class TDScene extends Phaser.Scene {
     this.recomputeBuildable();
     this.currentTheme = this.level >= 2 ? THEMES[(this.level - 2) % THEMES.length] : null;
     this.drawLevelBackground();
-    this.showBanner('Уровень ' + this.level, refund > 0 ? ('Карта сменилась. Башни проданы: +' + refund + '💰') : 'Карта сменилась');
+    this.showBanner('Уровень ' + this.level, refund > 0 ? ('Карта сменилась. Тян продано: +' + refund + '💰') : 'Карта сменилась');
     this.updateUIText();
   }
 
@@ -1045,7 +1072,8 @@ class TDScene extends Phaser.Scene {
     const hpFg = this.add.rectangle(start.x - barW / 2, start.y - radius - 8, barW, 5, 0x6fbf6f).setOrigin(0, 0.5);
     const bossRing = item.isBoss ? this.add.circle(start.x, start.y, radius + 5, 0xffffff, 0).setStrokeStyle(3, 0xf0b429) : null;
     const statusRing = this.add.circle(start.x, start.y, radius + 4, 0xffffff, 0).setStrokeStyle(3, 0xffffff).setVisible(false);
-    const statusOverlay = this.add.circle(start.x, start.y, radius, 0xffffff, 0).setVisible(false);
+    // statusOverlay использует blend mode ADD чтобы эффект был виден только поверх непрозрачных пикселей спрайта
+    const statusOverlay = this.add.circle(start.x, start.y, radius, 0xffffff, 0).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
     const shieldRing = t.hasShield ? this.add.circle(start.x, start.y, radius + 7, 0xffffff, 0.12).setStrokeStyle(3, 0xd6cbe8) : null;
 
     this.enemies.push({
@@ -1139,15 +1167,40 @@ class TDScene extends Phaser.Scene {
 
   startStatusBlink(enemy, el) {
     this.stopStatusBlink(enemy);
-    enemy.statusRing.setStrokeStyle(3, ELEMENT_COLORS[el]).setVisible(true);
-    enemy.statusOverlay.setFillStyle(ELEMENT_COLORS[el], 0.32).setAlpha(1).setVisible(true);
-    enemy.statusBlinkTween = this.tweens.add({ targets: enemy.statusOverlay, alpha: { from: 1, to: 0.2 }, duration: 380, yoyo: true, repeat: -1 });
+    const color = ELEMENT_COLORS[el];
+    enemy.statusRing.setStrokeStyle(3, color).setVisible(true);
+
+    // Мигание с использованием ADD blend mode - эффект виден только поверх непрозрачных пикселей спрайта
+    const state = { t: 0 };
+    enemy.statusBlinkTween = this.tweens.add({
+      targets: state,
+      t: 1,
+      duration: 400,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+      onUpdate: () => {
+        if (!enemy.statusOverlay || !enemy.body) return;
+        // Мигаем заливкой от 0.1 до 0.35 alpha (слегка заметно)
+        const alpha = 0.1 + state.t * 0.25;
+        enemy.statusOverlay.setFillStyle(color, alpha).setVisible(true);
+      },
+    });
   }
 
   stopStatusBlink(enemy) {
-    if (enemy.statusBlinkTween) { enemy.statusBlinkTween.stop(); enemy.statusBlinkTween = null; }
-    if (enemy.statusOverlay) enemy.statusOverlay.setVisible(false).setAlpha(1);
-    if (enemy.statusRing) enemy.statusRing.setVisible(false);
+    if (enemy.statusBlinkTween) {
+      enemy.statusBlinkTween.remove();
+      enemy.statusBlinkTween = null;
+    }
+
+    if (enemy.statusRing) {
+      enemy.statusRing.setVisible(false);
+    }
+
+    if (enemy.statusOverlay) {
+      enemy.statusOverlay.setVisible(false);
+    }
   }
 
   applyElementStatus(enemy, el, baseDamage, time) {
@@ -1207,11 +1260,11 @@ class TDScene extends Phaser.Scene {
       }
       case 'hydro_pyro':
         this.dealDamage(enemy, Math.round(baseDamage * dmgMult));
-        this.showFloatText(enemy.x, enemy.y - 30, 'Вскипание!', '#e08040');
+        this.showFloatText(enemy.x, enemy.y - 30, 'Пар!', '#e08040');
         break;
       case 'cryo_pyro':
         this.dealDamage(enemy, Math.round(baseDamage * dmgMult));
-        this.showFloatText(enemy.x, enemy.y - 30, 'Плавление!', '#e0973f');
+        this.showFloatText(enemy.x, enemy.y - 30, 'Таяние!', '#e0973f');
         break;
       case 'electro_hydro': {
         const radius = 90 * RANGE_SCALE * radiusMult;
@@ -1237,7 +1290,10 @@ class TDScene extends Phaser.Scene {
         const radius = 110 * RANGE_SCALE * radiusMult;
         for (const e2 of [...this.enemies]) {
           const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
-          if (d <= radius && this.inField(e2)) this.dealDamage(e2, Math.round(baseDamage * 1.3 * dmgMult), true);
+          if (d <= radius && this.inField(e2)) {
+            const dmg = Math.round(baseDamage * 1.0 * dmgMult);
+            this.dealDamage(e2, dmg, true);
+          }
         }
         this.showFloatText(enemy.x, enemy.y - 30, 'Перегрузка!', '#d9553f');
         break;
@@ -1265,20 +1321,47 @@ class TDScene extends Phaser.Scene {
     btnZone.on('pointerdown', () => this.scene.restart());
   }
 
+  updateCooldownVisuals(time) {
+    if (!this.cooldownGfx) return;
+    Object.keys(this.cooldownGfx).forEach(key => {
+      const { gfx, x, y, w, h } = this.cooldownGfx[key];
+      const left = (this.typeCooldownUntil[key] || 0) - time;
+      const txt = this.cooldownText[key];
+      if (left > 0) {
+        gfx.clear();
+        gfx.fillStyle(0x2a2038, 0.55).fillRoundedRect(x, y, w, h, 14);
+        gfx.setVisible(true);
+        txt.setText(Math.ceil(left / 1000) + 'с').setVisible(true);
+      } else {
+        gfx.setVisible(false);
+        txt.setVisible(false);
+      }
+    });
+  }
+
   update(time, delta) {
+    this.updateCooldownVisuals(time);
     if (this.gameOver) return;
     const dt = delta / 1000;
 
     if (this.awaitingPerkChoice) {
-      this.waveButtonText.setText('Выбери улучшение...');
+      this.waveButtonText.setText('Выбор...');
+      this.waveCountdownText.setText('');
     } else if (!this.waveInProgress) {
       this.nextWaveCountdown -= delta;
       const sec = Math.max(0, Math.ceil(this.nextWaveCountdown / 1000));
       const nextIsTransition = isTransitionWave(this.wave + 1) && !this.levelTransitionDone;
-      this.waveButtonText.setText(nextIsTransition ? ('Новый уровень через ' + sec + 'с') : ('Волна ' + (this.wave + 1) + ' через ' + sec + 'с'));
+      if (nextIsTransition) {
+        this.waveButtonText.setText('Новый ур.');
+        this.waveCountdownText.setText(sec + ' сек...');
+      } else {
+        this.waveButtonText.setText('Волна ' + (this.wave + 1));
+        this.waveCountdownText.setText(sec + ' сек...');
+      }
       if (this.nextWaveCountdown <= 0) this.startWave();
     } else {
-      this.waveButtonText.setText('Волна ' + this.wave + ' идёт...');
+      this.waveButtonText.setText('Волна ' + this.wave);
+      this.waveCountdownText.setText('идёт...');
     }
 
     if (this.awaitingPerkChoice) return;
@@ -1303,7 +1386,7 @@ class TDScene extends Phaser.Scene {
           for (const t of this.towers) {
             if (Phaser.Math.Distance.Between(e.x, e.y, t.x, t.y) <= WRECKER_ATTACK_RANGE) { e.attackTarget = t; break; }
           }
-          if (e.attackTarget && !e.attackWarned) { this.showFloatText(e.x, e.y - 30, 'Крушитель атакует башню!', '#d9553f'); e.attackWarned = true; }
+          if (e.attackTarget && !e.attackWarned) { this.showFloatText(e.x, e.y - 30, 'Крушитель атакует тян!', '#d9553f'); e.attackWarned = true; }
         }
         if (e.attackTarget) {
           e.attackTimer -= delta;
@@ -1388,7 +1471,7 @@ const config = {
   height: HEIGHT,
   parent: 'game-container',
   backgroundColor: '#f5f1fa',
-  render: { roundPixels: true },
+  render: { antialias: false, pixelArt: false, roundPixels: false },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: WIDTH, height: HEIGHT },
   scene: TDScene,
 };

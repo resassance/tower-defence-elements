@@ -17,4 +17,9 @@ html, body {
 
 #game-container canvas {
   box-shadow: 0 0 40px rgba(150, 120, 200, 0.25);
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
 }
