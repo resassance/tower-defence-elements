@@ -1,4 +1,4 @@
-const TILE = 64;
+const TILE = 72;
 const TOWER_BODY = 44;
 const RANGE_SCALE = TILE / 70;
 const COLS = 11;
@@ -127,32 +127,28 @@ const TOWER_MILESTONES = {
 const IS_MOBILE = typeof window !== 'undefined' && (window.innerWidth < 820 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ''));
 
 const UI_LAYOUT = (() => {
-  const marginX = IS_MOBILE ? 6 : 16;
-  const gap = IS_MOBILE ? 6 : 10;
+  const marginX = IS_MOBILE ? 8 : 16;
+  const gap = IS_MOBILE ? 8 : 10;
   const slots = 6;
   
-  // На мобильных волна кнопка занимает отдельную строку, на десктопе - в ряду
   const useCompactLayout = IS_MOBILE;
   
   let cardW, cardH, cardStartX, cardY, sellBtnX, waveBtnX, waveBtnW, waveBtnH, waveBtnY;
   
   if (useCompactLayout) {
-    // Компактный мобильный layout: карточки в одну линию, волна кнопка отдельно
     cardW = Math.round((PLAY_W - marginX * 2 - gap * 7) / 6);
-    cardH = 100;
+    cardH = 140;
     cardStartX = marginX;
     cardY = PLAY_H + 10;
     sellBtnX = cardStartX + 5 * (cardW + gap);
-    // Волна кнопка - отдельная строка справа
     waveBtnW = PLAY_W - sellBtnX - cardW - marginX;
     waveBtnX = sellBtnX + cardW + gap;
     waveBtnH = cardH;
-    waveBtnY = cardY;
+    waveBtnY = cardY + cardH / 2;
   } else {
-    // Десктопный layout: всё в одном ряду (уменьшенная кнопка волны для освобождения места)
     waveBtnW = 160;
     cardW = Math.round((PLAY_W - marginX * 2 - waveBtnW - gap * slots) / slots);
-    cardH = 116;
+    cardH = 130;
     cardStartX = marginX;
     cardY = PLAY_H + 16;
     sellBtnX = cardStartX + 5 * (cardW + gap);
@@ -169,7 +165,7 @@ const UI_LAYOUT = (() => {
   };
 })();
 
-const UI_SCALE = IS_MOBILE ? 1.35 : 1.15;
+const UI_SCALE = IS_MOBILE ? 1.4 : 1.2;
 
 const PERKS = [
   { id:'goldrush',  name:'Золотая жила',    desc:'+40% золота за волны и убийства',            icon:'💰', apply:s=>{ s.mult.gold *= 1.4; } },
@@ -232,7 +228,6 @@ class TDScene extends Phaser.Scene {
     Object.entries(ASSET_MANIFEST).forEach(([group, entries]) => Object.entries(entries).forEach(([name, path]) => this.load.image(group + '_' + name, path)));
     Object.entries(ICON_MANIFEST).forEach(([group, entries]) => Object.entries(entries).forEach(([name, path]) => this.load.image('icon_' + group + '_' + name, path)));
     
-    // Отключаем сглаживание для всех текстур при загрузке
     this.textures.on('add', (texture) => {
       if (texture && texture.baseTexture) {
         texture.baseTexture.setFilter(Phaser.Textures.FilterMode.NEAREST);
@@ -582,7 +577,6 @@ class TDScene extends Phaser.Scene {
     const HUD_DEPTH = 300;
     const chipY = 10, chipH = HUD_H - 20;
     const marginX = 12, gapC = 6;
-    // Уменьшенные размеры плиток для предотвращения наезжания
     const leftDefs = [
       { key: 'gold', w: 90 }, { key: 'lives', w: 82 }, { key: 'wave', w: 82 }, { key: 'level', w: 82 },
     ];
@@ -681,7 +675,6 @@ class TDScene extends Phaser.Scene {
     const { sellBtnX: x, sellBtnY: y, sellBtnW: w, sellBtnH: h } = UI_LAYOUT;
     gfx.clear();
     this.panelShadow(gfx, x, y, w, h, 14);
-    // Бледно-красный цвет для кнопки продажи
     if (active) {
       gfx.fillGradientStyle(0xffe0d8, 0xffe0d8, 0xffccc4, 0xffccc4, 1);
     } else {
@@ -707,10 +700,10 @@ class TDScene extends Phaser.Scene {
       this.drawCardPanel(gfx, bx, by, bw, bh, false);
       const zone = this.add.zone(bx, by, bw, bh).setOrigin(0, 0).setInteractive({ useHandCursor: true });
 
-      this.add.image(bx + bw / 2, by + 34, 'characters_' + key).setDisplaySize(48, 48);
+      this.add.image(bx + bw / 2, by + bh * 0.30, 'characters_' + key).setDisplaySize(48, 48);
       if (t.element) this.addIcon(bx + bw - 18, by + 14, 'elements', t.element, ELEMENT_ICON[t.element], 18);
-      this.txt(bx + bw / 2, by + 62, t.name, { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textDark }).setOrigin(0.5, 0);
-      this.costTexts[key] = this.txt(bx + bw / 2, by + 86, '💰 ' + this.effectiveCost(key), { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textAccent }).setOrigin(0.5, 0);
+      this.txt(bx + bw / 2, by + bh * 0.55, t.name, { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textDark }).setOrigin(0.5, 0);
+      this.costTexts[key] = this.txt(bx + bw / 2, by + bh * 0.78, '💰 ' + this.effectiveCost(key), { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textAccent }).setOrigin(0.5, 0);
 
       const cdGfx = this.add.graphics().setDepth(60).setVisible(false);
       const cdText = this.txt(bx + bw / 2, by + bh / 2, '', { fontFamily: 'Arial', fontSize: '20px', color: '#ffffff' }).setOrigin(0.5).setDepth(61).setVisible(false);
@@ -732,10 +725,14 @@ class TDScene extends Phaser.Scene {
     this.sellGfx = this.add.graphics();
     this.drawSellPanel(false);
     const sellZone = this.add.zone(UI_LAYOUT.sellBtnX, UI_LAYOUT.sellBtnY, UI_LAYOUT.sellBtnW, UI_LAYOUT.sellBtnH).setOrigin(0, 0).setInteractive({ useHandCursor: true });
-    this.addIcon(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, UI_LAYOUT.sellBtnY + 22, 'ui', 'sell', '🗑', 30);
-    // Двухстрочный текст для продажи - внутри кнопки
-    this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, UI_LAYOUT.sellBtnY + 36, 'Продать', { fontFamily: 'Arial', fontSize: '11px', color: PALETTE.textDark, align: 'center' }).setOrigin(0.5, 1);
-    this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, UI_LAYOUT.sellBtnY + 48, '60%', { fontFamily: 'Arial', fontSize: '10px', color: PALETTE.textMuted, align: 'center' }).setOrigin(0.5, 0);
+    const sy = UI_LAYOUT.sellBtnY, sh = UI_LAYOUT.sellBtnH;
+    this.addIcon(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, sy + sh * 0.30, 'ui', 'sell', '🗑', 30);
+    this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, sy + sh * 0.55, 'Продать', 
+      { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textDark, align: 'center' }
+    ).setOrigin(0.5, 0);
+    this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, sy + sh * 0.78, '60%', 
+      { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textAccent, align: 'center' }
+    ).setOrigin(0.5, 0);
     sellZone.on('pointerdown', () => {
       if (this.awaitingPerkChoice) return;
       this.sellMode = !this.sellMode;
@@ -751,9 +748,14 @@ class TDScene extends Phaser.Scene {
     this.waveGfx.lineStyle(2, 0xb79ae0, 1).strokeRoundedRect(wbx, wby, UI_LAYOUT.waveBtnW, UI_LAYOUT.waveBtnH, 16);
     this.waveGfx.fillStyle(0xffffff, 0.45).fillRoundedRect(wbx + 3, wby + 3, UI_LAYOUT.waveBtnW - 6, 12, 10);
     const waveZone = this.add.zone(wbx, wby, UI_LAYOUT.waveBtnW, UI_LAYOUT.waveBtnH).setOrigin(0, 0).setInteractive({ useHandCursor: true });
-    // Двухстрочный текст для кнопки волны
-    this.waveButtonText = this.txt(UI_LAYOUT.waveBtnX + UI_LAYOUT.waveBtnW / 2, UI_LAYOUT.waveBtnY - 8, '', { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textDark, align: 'center' }).setOrigin(0.5, 1);
-    this.waveCountdownText = this.txt(UI_LAYOUT.waveBtnX + UI_LAYOUT.waveBtnW / 2, UI_LAYOUT.waveBtnY + 10, '', { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textMuted, align: 'center' }).setOrigin(0.5, 0);
+    const wy = UI_LAYOUT.waveBtnY, wh = UI_LAYOUT.waveBtnH;
+    const offset = 0.005;
+    this.waveButtonText = this.txt(UI_LAYOUT.waveBtnX + UI_LAYOUT.waveBtnW / 2, wy - wh * offset, '', 
+      { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textDark, align: 'center' }
+    ).setOrigin(0.5, 1);
+    this.waveCountdownText = this.txt(UI_LAYOUT.waveBtnX + UI_LAYOUT.waveBtnW / 2, wy + wh * offset, '', 
+      { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textMuted, align: 'center' }
+    ).setOrigin(0.5, 0);
     waveZone.on('pointerdown', () => { if (!this.waveInProgress && !this.awaitingPerkChoice) this.startWave(); });
 
     this.updateUIText();
@@ -1072,7 +1074,6 @@ class TDScene extends Phaser.Scene {
     const hpFg = this.add.rectangle(start.x - barW / 2, start.y - radius - 8, barW, 5, 0x6fbf6f).setOrigin(0, 0.5);
     const bossRing = item.isBoss ? this.add.circle(start.x, start.y, radius + 5, 0xffffff, 0).setStrokeStyle(3, 0xf0b429) : null;
     const statusRing = this.add.circle(start.x, start.y, radius + 4, 0xffffff, 0).setStrokeStyle(3, 0xffffff).setVisible(false);
-    // statusOverlay использует blend mode ADD чтобы эффект был виден только поверх непрозрачных пикселей спрайта
     const statusOverlay = this.add.circle(start.x, start.y, radius, 0xffffff, 0).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
     const shieldRing = t.hasShield ? this.add.circle(start.x, start.y, radius + 7, 0xffffff, 0.12).setStrokeStyle(3, 0xd6cbe8) : null;
 
@@ -1170,7 +1171,6 @@ class TDScene extends Phaser.Scene {
     const color = ELEMENT_COLORS[el];
     enemy.statusRing.setStrokeStyle(3, color).setVisible(true);
 
-    // Мигание с использованием ADD blend mode - эффект виден только поверх непрозрачных пикселей спрайта
     const state = { t: 0 };
     enemy.statusBlinkTween = this.tweens.add({
       targets: state,
@@ -1181,7 +1181,6 @@ class TDScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
       onUpdate: () => {
         if (!enemy.statusOverlay || !enemy.body) return;
-        // Мигаем заливкой от 0.1 до 0.35 alpha (слегка заметно)
         const alpha = 0.1 + state.t * 0.25;
         enemy.statusOverlay.setFillStyle(color, alpha).setVisible(true);
       },

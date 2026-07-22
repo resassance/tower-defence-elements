@@ -15,10 +15,6 @@ const Bridge = (function () {
         onResume: null
     };
 
-    // Tracks whether GameplayAPI currently thinks we're "in gameplay", so pause/resume
-    // and manual start/stop calls never get out of sync with each other (double-start or
-    // double-stop calls are harmless to Yandex, but keeping this local flag lets other code
-    // ask "are we currently marked as playing?" if it ever needs to).
     let gameplayActive = false;
 
 
@@ -40,8 +36,6 @@ const Bridge = (function () {
 
         const host = window.location.hostname || '';
         if (host.endsWith('crazygames.com')) return 'crazygames';
-        // Yandex Games serves the game from a yandex.ru/net/... iframe, or from the
-        // dedicated y-games.ru/*.yandex-games.net sandbox domains used during moderation/testing.
         if (host.endsWith('yandex.ru') || host.endsWith('yandex.net') || host.endsWith('y-games.ru') || host.endsWith('yandex-games.net')) return 'yandex';
         return 'none';
     }
@@ -90,20 +84,12 @@ const Bridge = (function () {
 
     async function initYandex() {
         try {
-            // Requirement 1.19.1: SDK must be connected exactly as documented, script tag
-            // BEFORE YaGames.init() is called. https://yandex.ru/games/sdk/v2 is the
-            // official, currently-documented connection URL (see "Connection and usage").
             await loadScript('https://yandex.ru/games/sdk/v2');
             if (typeof YaGames === 'undefined') throw new Error('YaGames не определён после загрузки скрипта');
 
             ysdk = await YaGames.init();
             platform = 'yandex';
 
-            // Requirement: game_api_pause / game_api_resume tracking is optional, but if we
-            // use ysdk.on()/off() the handling must strictly pause/resume actual gameplay
-            // (mute audio, stop timers) — not just fire a cosmetic callback. We also mirror
-            // this into GameplayAPI.start()/stop() below, matching what Yandex's own docs
-            // say game_api_pause/resume imply for gameplay-markup users.
             ysdk.on('game_api_pause', () => {
                 gameplayStop();
                 if (hooks.onPause) hooks.onPause();
