@@ -471,7 +471,7 @@ const Bridge = (function () {
         if (platform === 'yandex') return !!yaPlayer;
         if (platform === 'crazygames') return !!(crazySdk && crazySdk.data);
         if (platform === 'telegram') return !!(tg && tg.CloudStorage);
-        return false;
+        try { return typeof localStorage !== 'undefined'; } catch (e) { return false; }
     }
 
     /** @returns {Promise<Object|null>} данные из облака либо null */
@@ -510,7 +510,12 @@ const Bridge = (function () {
             }
         }
 
-        return null;
+        try {
+            const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(SAVE_KEY) : null;
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+            return null;
+        }
     }
 
     /**
@@ -555,6 +560,11 @@ const Bridge = (function () {
             });
         }
 
+        try {
+            if (typeof localStorage !== 'undefined') localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+        } catch (e) {
+            console.warn('Bridge: не удалось сохранить в localStorage:', e);
+        }
         return Promise.resolve();
     }
 
