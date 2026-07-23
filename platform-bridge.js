@@ -62,6 +62,7 @@ const Bridge = (function () {
         hooks.onResume = opts.onResume || null;
 
         const target = detectPlatformName();
+        console.log('Bridge: определена платформа =', target, '(hostname:', window.location.hostname + ')');
 
         if (target === 'crazygames') {
             await initCrazyGames();
@@ -90,13 +91,25 @@ const Bridge = (function () {
             ysdk = await YaGames.init();
             platform = 'yandex';
 
+            console.log('Bridge(yandex): SDK инициализирован. features.LoadingAPI:', !!(ysdk.features && ysdk.features.LoadingAPI), '| features.GameplayAPI:', !!(ysdk.features && ysdk.features.GameplayAPI));
+
             ysdk.on('game_api_pause', () => {
-                gameplayStop();
-                if (hooks.onPause) hooks.onPause();
+                console.log('Bridge(yandex): событие game_api_pause получено');
+                try {
+                    gameplayStop();
+                    if (hooks.onPause) hooks.onPause();
+                } catch (e) {
+                    console.error('Bridge(yandex): ошибка в обработчике game_api_pause:', e);
+                }
             });
             ysdk.on('game_api_resume', () => {
-                gameplayStart();
-                if (hooks.onResume) hooks.onResume();
+                console.log('Bridge(yandex): событие game_api_resume получено');
+                try {
+                    gameplayStart();
+                    if (hooks.onResume) hooks.onResume();
+                } catch (e) {
+                    console.error('Bridge(yandex): ошибка в обработчике game_api_resume:', e);
+                }
             });
 
             try {
@@ -261,6 +274,9 @@ const Bridge = (function () {
 
         if (platform === 'yandex' && ysdk && ysdk.features && ysdk.features.LoadingAPI) {
             ysdk.features.LoadingAPI.ready();
+            console.log('Bridge(yandex): LoadingAPI.ready() вызван');
+        } else if (platform === 'yandex') {
+            console.warn('Bridge(yandex): LoadingAPI.ready() НЕ вызван — ysdk.features.LoadingAPI недоступен', ysdk && ysdk.features);
         }
         if (platform === 'crazygames' && crazySdk && crazySdk.game) {
             crazySdk.game.sdkGameLoadingStop();
@@ -277,6 +293,9 @@ const Bridge = (function () {
         gameplayActive = true;
         if (platform === 'yandex' && ysdk && ysdk.features && ysdk.features.GameplayAPI) {
             ysdk.features.GameplayAPI.start();
+            console.log('Bridge(yandex): GameplayAPI.start() вызван');
+        } else if (platform === 'yandex') {
+            console.warn('Bridge(yandex): GameplayAPI.start() НЕ вызван — ysdk.features.GameplayAPI недоступен', ysdk && ysdk.features);
         }
         if (platform === 'crazygames' && crazySdk && crazySdk.game) {
             crazySdk.game.gameplayStart();
@@ -292,6 +311,9 @@ const Bridge = (function () {
         gameplayActive = false;
         if (platform === 'yandex' && ysdk && ysdk.features && ysdk.features.GameplayAPI) {
             ysdk.features.GameplayAPI.stop();
+            console.log('Bridge(yandex): GameplayAPI.stop() вызван');
+        } else if (platform === 'yandex') {
+            console.warn('Bridge(yandex): GameplayAPI.stop() НЕ вызван — ysdk.features.GameplayAPI недоступен', ysdk && ysdk.features);
         }
         if (platform === 'crazygames' && crazySdk && crazySdk.game) {
             crazySdk.game.gameplayStop();

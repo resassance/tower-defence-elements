@@ -55,6 +55,95 @@ const PALETTE = {
 const ELEMENT_COLORS = { hydro: 0x6fb8f5, cryo: 0xa8e0f5, pyro: 0xff9f6b, electro: 0xc2a3f0 };
 const ELEMENT_ICON = { hydro: '💧', cryo: '❄️', pyro: '🔥', electro: '⚡' };
 
+let LANG = 'ru';
+
+/** Decide UI language: prefer the platform's reported locale (Yandex/Telegram/CrazyGames),
+ *  fall back to the browser's language, and default to Russian. */
+function detectLang() {
+  try {
+    if (typeof Bridge !== 'undefined' && Bridge.getEnvLanguage) {
+      const envLang = Bridge.getEnvLanguage();
+      if (envLang === 'en' || envLang === 'ru') return envLang;
+    }
+  } catch (e) { }
+  try {
+    const nav = (navigator.language || navigator.userLanguage || 'ru').toLowerCase();
+    return nav.startsWith('en') ? 'en' : 'ru';
+  } catch (e) { return 'ru'; }
+}
+
+/** Look up a localized field on a data object, e.g. L(tower.type, 'name'). Falls back to
+ *  the Russian field if no '<field>_en' translation exists yet. */
+function L(obj, field) {
+  if (!obj) return '';
+  if (LANG === 'en' && obj[field + '_en']) return obj[field + '_en'];
+  return obj[field];
+}
+
+const STRINGS = {
+  game_title: { ru: 'Аниме-тян против Эфириалов — TD прототип', en: 'Anime Girls vs Etherials — TD Prototype' },
+  welcome_back: { ru: 'С возвращением!', en: 'Welcome back!' },
+  continuing_from_wave: { ru: 'Продолжаем с волны {wave} (уровень {level})', en: 'Continuing from wave {wave} (level {level})' },
+  your_record: { ru: 'Ваш рекорд: волна {wave} (уровень {level})', en: 'Your record: wave {wave} (level {level})' },
+  tooltip_gold: { ru: 'Золото — трать на новых тян и их прокачку.', en: 'Gold — spend it on new towers and upgrades.' },
+  tooltip_lives: { ru: 'Жизни. Если эфириал доходит до конца пути — теряется жизнь. 0 жизней = поражение.', en: 'Lives. If an etherial reaches the end of the path, you lose a life. 0 lives = defeat.' },
+  tooltip_wave: { ru: 'Текущая волна врагов в этом уровне (всего {n} волн на уровень).', en: 'Current enemy wave in this level (there are {n} waves per level).' },
+  tooltip_level: { ru: 'Номер уровня. Каждые {n} волн карта меняется и можно выбрать улучшение.', en: 'Level number. Every {n} waves the map changes and you can pick an upgrade.' },
+  tooltip_towers: { ru: 'Сколько тян размещено. Лимит на поле: {n}. КД между установкой тян одного типа: 10с.', en: 'How many towers are placed. Field limit: {n}. Cooldown between placing towers of the same type: 10s.' },
+  tooltip_theme: { ru: 'Уровень усиливает реакцию «{reaction}» (×{mult}) и увеличивает дальность башен нужной стихии.', en: 'This level boosts the "{reaction}" reaction (×{mult}) and increases range for towers of the matching element.' },
+  sell_button: { ru: 'Продать', en: 'Sell' },
+  gold_prefix: { ru: '💰 ', en: '💰 ' },
+  lives_prefix: { ru: '❤ ', en: '❤ ' },
+  wave_prefix: { ru: '🌊 ', en: '🌊 ' },
+  level_prefix: { ru: '🗺 Ур.', en: '🗺 Lv.' },
+  towers_prefix: { ru: '🏗 Тян: ', en: '🏗 Tyan: ' },
+  cooldown_suffix_s: { ru: 'с', en: 's' },
+  tower_limit_reached: { ru: 'Лимит тян: {n}', en: 'Tower limit: {n}' },
+  cooldown_left: { ru: 'КД: {n}с', en: 'CD: {n}s' },
+  not_enough_gold: { ru: 'Не хватает золота', en: 'Not enough gold' },
+  lvl_short: { ru: 'Ур.', en: 'Lv.' },
+  lvl1_short: { ru: 'Ур.1', en: 'Lv.1' },
+  max_level: { ru: 'Макс. уровень', en: 'Max level' },
+  need_gold: { ru: 'Нужно 💰{n}', en: 'Need 💰{n}' },
+  upgraded_to: { ru: 'Ур. {n}', en: 'Lv. {n}' },
+  sell_refund: { ru: '+{n}💰', en: '+{n}💰' },
+  map_changed: { ru: 'Карта сменилась', en: 'The map changed' },
+  map_changed_refund: { ru: 'Карта сменилась. Тян продано: +{n}💰', en: 'The map changed. Towers sold: +{n}💰' },
+  level_n: { ru: 'Уровень {n}', en: 'Level {n}' },
+  themed_level: { ru: 'Тематический уровень:\n{name}', en: 'Themed level:\n{name}' },
+  level_buff: { ru: 'Бафф уровня: {reaction} сильнее в {mult} раза (+дальность тян этой стихии)', en: 'Level buff: {reaction} is {mult}x stronger (+range for towers of that element)' },
+  got_it: { ru: 'Понятно', en: 'Got it' },
+  choose_upgrade: { ru: 'Выбери улучшение', en: 'Choose an upgrade' },
+  fx_ice_burst: { ru: 'Ледяной взрыв!', en: 'Ice burst!' },
+  fx_freeze: { ru: 'Заморозка!', en: 'Freeze!' },
+  fx_freeze_cd: { ru: 'Заморозка на КД', en: 'Freeze on cooldown' },
+  fx_steam: { ru: 'Пар!', en: 'Steam!' },
+  fx_melt: { ru: 'Таяние!', en: 'Melt!' },
+  fx_electrocharged: { ru: 'Наэлектризовано!', en: 'Electro-charged!' },
+  fx_superconductor: { ru: 'Сверхпроводник!', en: 'Superconductor!' },
+  fx_overload: { ru: 'Перегрузка!', en: 'Overload!' },
+  game_over: { ru: 'Игра окончена', en: 'Game over' },
+  wave_level_summary: { ru: 'Волна {wave} · уровень {level}', en: 'Wave {wave} · level {level}' },
+  new_record: { ru: 'Новый рекорд! 🎉', en: 'New record! 🎉' },
+  record_wave: { ru: 'Рекорд: волна {n}', en: 'Record: wave {n}' },
+  restart_button: { ru: 'Заново', en: 'Restart' },
+  choosing: { ru: 'Выбор...', en: 'Choosing...' },
+  new_level_button: { ru: 'Новый ур.', en: 'New level' },
+  wave_button: { ru: 'Волна {n}', en: 'Wave {n}' },
+  seconds_ellipsis: { ru: '{n} сек...', en: '{n} sec...' },
+  wave_in_progress: { ru: 'идёт...', en: 'in progress...' },
+  wrecker_attacks: { ru: 'Крушитель атакует тян!', en: 'A Wrecker is attacking a tower!' },
+  switch_language: { ru: 'Сменить язык', en: 'Switch language' },
+};
+
+/** Translate a UI string by key, with optional {var} substitution, e.g. T('wave_button', {n: 3}). */
+function T(key, vars) {
+  const entry = STRINGS[key];
+  let s = entry ? (entry[LANG] || entry.ru) : key;
+  if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+  return s;
+}
+
 const ASSET_MANIFEST = {
   tiles: { border: 'assets/textures/border.png', grass: 'assets/textures/grass.png', forest: 'assets/textures/forest.png', trail: 'assets/textures/trail.png' },
   characters: { blade: 'assets/characters/blade.png', cryo: 'assets/characters/cryo.png', bomber: 'assets/characters/bomber.png', hydro: 'assets/characters/hydro.png', electro: 'assets/characters/electro.png' },
@@ -69,52 +158,52 @@ const ICON_MANIFEST = {
 };
 
 const TOWER_TYPES = {
-  blade:   { key:'blade',   name:'Клинок-тян',  cost:50,  range:140 * RANGE_SCALE, fireRate:650,  damage:11, color:0xff8fae, proj:0xffd6e2, splash:0,  element:null },
-  cryo:    { key:'cryo',    name:'Крио-тян',    cost:70,  range:120 * RANGE_SCALE, fireRate:1050, damage:6,  color:0x8fd6ef, proj:0xd8f4ff, splash:0,  element:'cryo' },
-  bomber:  { key:'bomber',  name:'Бомбер-тян',  cost:100, range:190 * RANGE_SCALE, fireRate:1700, damage:16, color:0xffb877, proj:0xffe3c2, splash:70 * RANGE_SCALE, element:'pyro' },
-  hydro:   { key:'hydro',   name:'Гидро-тян',   cost:60,  range:150 * RANGE_SCALE, fireRate:900,  damage:9,  color:0x7ec8ff, proj:0xd2ecff, splash:0,  element:'hydro' },
-  electro: { key:'electro', name:'Электро-тян', cost:90,  range:170 * RANGE_SCALE, fireRate:950,  damage:10, color:0xc9aaf5, proj:0xe8dbff, splash:0,  element:'electro' },
+  blade:   { key:'blade',   name:'Клинок-тян',  name_en:'Blade-chan',   cost:50,  range:140 * RANGE_SCALE, fireRate:650,  damage:11, color:0xff8fae, proj:0xffd6e2, splash:0,  element:null },
+  cryo:    { key:'cryo',    name:'Крио-тян',    name_en:'Cryo-chan',    cost:70,  range:120 * RANGE_SCALE, fireRate:1050, damage:6,  color:0x8fd6ef, proj:0xd8f4ff, splash:0,  element:'cryo' },
+  bomber:  { key:'bomber',  name:'Бомбер-тян',  name_en:'Bomber-chan',  cost:100, range:190 * RANGE_SCALE, fireRate:1700, damage:16, color:0xffb877, proj:0xffe3c2, splash:70 * RANGE_SCALE, element:'pyro' },
+  hydro:   { key:'hydro',   name:'Гидро-тян',   name_en:'Hydro-chan',   cost:60,  range:150 * RANGE_SCALE, fireRate:900,  damage:9,  color:0x7ec8ff, proj:0xd2ecff, splash:0,  element:'hydro' },
+  electro: { key:'electro', name:'Электро-тян', name_en:'Electro-chan', cost:90,  range:170 * RANGE_SCALE, fireRate:950,  damage:10, color:0xc9aaf5, proj:0xe8dbff, splash:0,  element:'electro' },
 };
 
 const TOWER_MAX_HP = 150;
 
 const ENEMY_TYPES = {
-  grunt:    { name:'Марионетка', hpMult:1,    speedMult:1,    reward:1,   livesCost:1, color:0xa87fd9, ring:0xd9c2f0, radius:13 },
-  runner:   { name:'Рывок',      hpMult:0.5,  speedMult:1.7,  reward:0.8, livesCost:1, color:0xe86fa0, ring:0xffc2dc, radius:10 },
-  shielded: { name:'Щитовик',    hpMult:0.5,  speedMult:0.7,  reward:1.6, livesCost:2, color:0x7a5fb8, ring:0xb8a8dc, radius:17, hasShield:true },
-  wrecker:  { name:'Крушитель',  hpMult:1.3,  speedMult:0.8,  reward:1.7, livesCost:1, color:0xe85f52, ring:0xffb0a8, radius:14, attacksTowers:true, attackDamage:10, attackRate:900 },
+  grunt:    { name:'Марионетка', name_en:'Puppet',   hpMult:1,    speedMult:1,    reward:1,   livesCost:1, color:0xa87fd9, ring:0xd9c2f0, radius:13 },
+  runner:   { name:'Рывок',      name_en:'Dash',      hpMult:0.5,  speedMult:1.7,  reward:0.8, livesCost:1, color:0xe86fa0, ring:0xffc2dc, radius:10 },
+  shielded: { name:'Щитовик',    name_en:'Shielder',  hpMult:0.5,  speedMult:0.7,  reward:1.6, livesCost:2, color:0x7a5fb8, ring:0xb8a8dc, radius:17, hasShield:true },
+  wrecker:  { name:'Крушитель',  name_en:'Wrecker',   hpMult:1.3,  speedMult:0.8,  reward:1.7, livesCost:1, color:0xe85f52, ring:0xffb0a8, radius:14, attacksTowers:true, attackDamage:10, attackRate:900 },
 };
 
 const TOWER_MILESTONES = {
   blade: [
-    { lvl:5,  name:'Боевой инстинкт',   desc:'+8% урона всем тян',            apply:s=>{ s.mult.damage *= 1.08; } },
-    { lvl:10, name:'Быстрые руки',      desc:'+8% скорострельности всем тян', apply:s=>{ s.mult.fireRate *= 1.08; } },
-    { lvl:15, name:'Смертельная точность', desc:'+10% урона всем тян',        apply:s=>{ s.mult.damage *= 1.10; } },
-    { lvl:20, name:'Клинок судьбы',     desc:'+15% скорострельности всем тян', apply:s=>{ s.mult.fireRate *= 1.15; } },
+    { lvl:5,  name:'Боевой инстинкт',   name_en:'Battle Instinct',    desc:'+8% урона всем тян',            desc_en:'+8% damage to all towers',            apply:s=>{ s.mult.damage *= 1.08; } },
+    { lvl:10, name:'Быстрые руки',      name_en:'Quick Hands',        desc:'+8% скорострельности всем тян', desc_en:'+8% fire rate for all towers',        apply:s=>{ s.mult.fireRate *= 1.08; } },
+    { lvl:15, name:'Смертельная точность', name_en:'Deadly Precision', desc:'+10% урона всем тян',          desc_en:'+10% damage to all towers',           apply:s=>{ s.mult.damage *= 1.10; } },
+    { lvl:20, name:'Клинок судьбы',     name_en:'Blade of Fate',      desc:'+15% скорострельности всем тян', desc_en:'+15% fire rate for all towers',      apply:s=>{ s.mult.fireRate *= 1.15; } },
   ],
   cryo: [
-    { lvl:5,  name:'Ледяное дыхание', desc:'КД заморозки -20%',                    apply:s=>{ s.mult.freezeCooldown *= 0.8; } },
-    { lvl:10, name:'Вечная мерзлота', desc:'Стихийные статусы держатся +25% дольше', apply:s=>{ s.mult.statusDuration *= 1.25; } },
-    { lvl:15, name:'Ледяной шторм',   desc:'Радиус взрывных реакций +20%',          apply:s=>{ s.mult.reactionRadius *= 1.2; } },
-    { lvl:20, name:'Абсолютный ноль', desc:'КД заморозки ещё -20%',                 apply:s=>{ s.mult.freezeCooldown *= 0.8; } },
+    { lvl:5,  name:'Ледяное дыхание', name_en:'Frost Breath',   desc:'КД заморозки -20%',                    desc_en:'Freeze cooldown -20%',                    apply:s=>{ s.mult.freezeCooldown *= 0.8; } },
+    { lvl:10, name:'Вечная мерзлота', name_en:'Permafrost',     desc:'Стихийные статусы держатся +25% дольше', desc_en:'Elemental statuses last 25% longer',    apply:s=>{ s.mult.statusDuration *= 1.25; } },
+    { lvl:15, name:'Ледяной шторм',   name_en:'Ice Storm',      desc:'Радиус взрывных реакций +20%',          desc_en:'Reaction blast radius +20%',             apply:s=>{ s.mult.reactionRadius *= 1.2; } },
+    { lvl:20, name:'Абсолютный ноль', name_en:'Absolute Zero',  desc:'КД заморозки ещё -20%',                 desc_en:'Freeze cooldown -20% more',              apply:s=>{ s.mult.freezeCooldown *= 0.8; } },
   ],
   bomber: [
-    { lvl:5,  name:'Больше пороха',    desc:'Радиус сплэша всех бомберов +20%', apply:s=>{ s.mult.splash *= 1.2; } },
-    { lvl:10, name:'Термитная смесь',  desc:'Урон реакций +15%',                apply:s=>{ s.mult.reactionDamage *= 1.15; } },
-    { lvl:15, name:'Цепная реакция',   desc:'Радиус взрывных реакций +20%',     apply:s=>{ s.mult.reactionRadius *= 1.2; } },
-    { lvl:20, name:'Огненный шторм',   desc:'Урон реакций ещё +20%',            apply:s=>{ s.mult.reactionDamage *= 1.2; } },
+    { lvl:5,  name:'Больше пороха',    name_en:'More Gunpowder',  desc:'Радиус сплэша всех бомберов +20%', desc_en:'Splash radius of all bombers +20%', apply:s=>{ s.mult.splash *= 1.2; } },
+    { lvl:10, name:'Термитная смесь',  name_en:'Thermite Mix',    desc:'Урон реакций +15%',                desc_en:'Reaction damage +15%',              apply:s=>{ s.mult.reactionDamage *= 1.15; } },
+    { lvl:15, name:'Цепная реакция',   name_en:'Chain Reaction',  desc:'Радиус взрывных реакций +20%',     desc_en:'Reaction blast radius +20%',        apply:s=>{ s.mult.reactionRadius *= 1.2; } },
+    { lvl:20, name:'Огненный шторм',   name_en:'Firestorm',       desc:'Урон реакций ещё +20%',            desc_en:'Reaction damage +20% more',         apply:s=>{ s.mult.reactionDamage *= 1.2; } },
   ],
   hydro: [
-    { lvl:5,  name:'Течение',          desc:'КД реакций -15%',                       apply:s=>{ s.mult.reactionCooldown *= 0.85; } },
-    { lvl:10, name:'Насыщенная влага', desc:'Стихийные статусы держатся +25% дольше', apply:s=>{ s.mult.statusDuration *= 1.25; } },
-    { lvl:15, name:'Золотой поток',    desc:'+10% золота',                           apply:s=>{ s.mult.gold *= 1.1; } },
-    { lvl:20, name:'Прилив',           desc:'КД реакций ещё -15%',                    apply:s=>{ s.mult.reactionCooldown *= 0.85; } },
+    { lvl:5,  name:'Течение',          name_en:'Current',           desc:'КД реакций -15%',                       desc_en:'Reaction cooldown -15%',                 apply:s=>{ s.mult.reactionCooldown *= 0.85; } },
+    { lvl:10, name:'Насыщенная влага', name_en:'Saturated Moisture', desc:'Стихийные статусы держатся +25% дольше', desc_en:'Elemental statuses last 25% longer',   apply:s=>{ s.mult.statusDuration *= 1.25; } },
+    { lvl:15, name:'Золотой поток',    name_en:'Golden Stream',     desc:'+10% золота',                           desc_en:'+10% gold',                              apply:s=>{ s.mult.gold *= 1.1; } },
+    { lvl:20, name:'Прилив',           name_en:'Tide',              desc:'КД реакций ещё -15%',                    desc_en:'Reaction cooldown -15% more',            apply:s=>{ s.mult.reactionCooldown *= 0.85; } },
   ],
   electro: [
-    { lvl:5,  name:'Разряд',            desc:'+8% скорострельности всем тян', apply:s=>{ s.mult.fireRate *= 1.08; } },
-    { lvl:10, name:'Высокое напряжение', desc:'Урон реакций +15%',               apply:s=>{ s.mult.reactionDamage *= 1.15; } },
-    { lvl:15, name:'Электросеть',       desc:'Радиус взрывных реакций +20%',     apply:s=>{ s.mult.reactionRadius *= 1.2; } },
-    { lvl:20, name:'Шторм молний',      desc:'+15% дальности всем тян',       apply:s=>{ s.mult.range *= 1.15; } },
+    { lvl:5,  name:'Разряд',            name_en:'Discharge',      desc:'+8% скорострельности всем тян', desc_en:'+8% fire rate for all towers', apply:s=>{ s.mult.fireRate *= 1.08; } },
+    { lvl:10, name:'Высокое напряжение', name_en:'High Voltage',  desc:'Урон реакций +15%',               desc_en:'Reaction damage +15%',         apply:s=>{ s.mult.reactionDamage *= 1.15; } },
+    { lvl:15, name:'Электросеть',       name_en:'Power Grid',     desc:'Радиус взрывных реакций +20%',     desc_en:'Reaction blast radius +20%',   apply:s=>{ s.mult.reactionRadius *= 1.2; } },
+    { lvl:20, name:'Шторм молний',      name_en:'Lightning Storm', desc:'+15% дальности всем тян',       desc_en:'+15% range for all towers',    apply:s=>{ s.mult.range *= 1.15; } },
   ],
 };
 
@@ -162,21 +251,21 @@ const UI_LAYOUT = (() => {
 const UI_SCALE = IS_MOBILE ? 1.4 : 1.2;
 
 const PERKS = [
-  { id:'goldrush',  name:'Золотая жила',    desc:'+40% золота за волны и убийства',            icon:'💰', apply:s=>{ s.mult.gold *= 1.4; } },
-  { id:'sharp',     name:'Заточка клинков', desc:'+20% урона всех тян',                        icon:'⚔️', apply:s=>{ s.mult.damage *= 1.2; } },
-  { id:'haste',     name:'Прилив сил',      desc:'+20% скорострельности тян',                  icon:'💨', apply:s=>{ s.mult.fireRate *= 1.2; } },
-  { id:'walls',     name:'Крепкие стены',   desc:'+60 HP всем новым тян',                     icon:'🛡️', apply:s=>{ s.mult.towerHpBonus += 60; } },
-  { id:'discount',  name:'Скидка мастера',  desc:'Тян дешевле на 15%',                         icon:'🏷️', apply:s=>{ s.mult.cost *= 0.85; s.refreshCostLabels(); } },
-  { id:'swarm',     name:'Рой вместо силы', desc:'Врагов +30% числом, но у них -25% HP',         icon:'🐝', apply:s=>{ s.mult.enemyCount *= 1.3; s.mult.enemyHp *= 0.75; } },
+  { id:'goldrush',  name:'Золотая жила',    name_en:'Gold Rush',           desc:'+40% золота за волны и убийства',      desc_en:'+40% gold from waves and kills',           icon:'💰', apply:s=>{ s.mult.gold *= 1.4; } },
+  { id:'sharp',     name:'Заточка клинков', name_en:'Blade Sharpening',    desc:'+20% урона всех тян',                  desc_en:'+20% damage of all towers',                icon:'⚔️', apply:s=>{ s.mult.damage *= 1.2; } },
+  { id:'haste',     name:'Прилив сил',      name_en:'Surge of Strength',   desc:'+20% скорострельности тян',            desc_en:'+20% tower fire rate',                     icon:'💨', apply:s=>{ s.mult.fireRate *= 1.2; } },
+  { id:'walls',     name:'Крепкие стены',   name_en:'Sturdy Walls',        desc:'+60 HP всем новым тян',               desc_en:'+60 HP to all new towers',                 icon:'🛡️', apply:s=>{ s.mult.towerHpBonus += 60; } },
+  { id:'discount',  name:'Скидка мастера',  name_en:"Craftsman's Discount", desc:'Тян дешевле на 15%',                  desc_en:'Towers cost 15% less',                     icon:'🏷️', apply:s=>{ s.mult.cost *= 0.85; s.refreshCostLabels(); } },
+  { id:'swarm',     name:'Рой вместо силы', name_en:'Swarm over Strength', desc:'Врагов +30% числом, но у них -25% HP', desc_en:'+30% more enemies, but -25% HP',           icon:'🐝', apply:s=>{ s.mult.enemyCount *= 1.3; s.mult.enemyHp *= 0.75; } },
 ];
 
 const THEMES = [
-  { id:'swift',    name:'Скоростной натиск',    desc:'Волна почти целиком состоит из быстрых Рывков.', icon:'❄️', reactionName:'Заморозка',            reactionKeys:['cryo_hydro'],              buffMult:1.6, enemyBias:{ runner:4, grunt:1 } },
-  { id:'armored',  name:'Бронированный рубеж',  desc:'Много Щитовиков с защитным барьером.',            icon:'💥', reactionName:'Перегрузка',            reactionKeys:['electro_pyro'],            buffMult:1.6, enemyBias:{ shielded:4, grunt:1 } },
-  { id:'standard', name:'Обычный натиск',       desc:'Стандартная пехота эфириалов.',                   icon:'🔗', reactionName:'Сверхпроводник',        reactionKeys:['cryo_electro'],            buffMult:1.7, enemyBias:{ grunt:5 } },
-  { id:'swarm',    name:'Рой мелочи',           desc:'Огромное число слабых, но многочисленных мобов.', icon:'⚡', reactionName:'Наэлектризованность',   reactionKeys:['electro_hydro'],           buffMult:1.8, enemyBias:{ grunt:5, runner:2 }, countMult:1.4, hpMultLevel:0.7 },
-  { id:'melt',     name:'Ледяной пожар',        desc:'Огонь и лёд сталкиваются — эфириалы то леденеют, то тают.', icon:'🧊', reactionName:'Таяние', reactionKeys:['cryo_pyro'],  buffMult:1.7, enemyBias:{ shielded:3, grunt:3 } },
-  { id:'steam',    name:'Паровой прорыв',       desc:'Влажная волна легко превращается в обжигающий пар.',      icon:'💨', reactionName:'Пар',    reactionKeys:['hydro_pyro'], buffMult:1.7, enemyBias:{ wrecker:2, runner:2, grunt:2 } },
+  { id:'swift',    name:'Скоростной натиск',    name_en:'Speed Rush',        desc:'Волна почти целиком состоит из быстрых Рывков.', desc_en:'The wave is almost entirely made up of fast Dashes.', icon:'❄️', reactionName:'Заморозка',          reactionName_en:'Freeze',          reactionKeys:['cryo_hydro'],              buffMult:1.6, enemyBias:{ runner:4, grunt:1 } },
+  { id:'armored',  name:'Бронированный рубеж',  name_en:'Armored Front',     desc:'Много Щитовиков с защитным барьером.',            desc_en:'Lots of Shielders with a protective barrier.',         icon:'💥', reactionName:'Перегрузка',          reactionName_en:'Overload',        reactionKeys:['electro_pyro'],            buffMult:1.6, enemyBias:{ shielded:4, grunt:1 } },
+  { id:'standard', name:'Обычный натиск',       name_en:'Standard Assault',  desc:'Стандартная пехота эфириалов.',                   desc_en:'Standard etherial infantry.',                          icon:'🔗', reactionName:'Сверхпроводник',      reactionName_en:'Superconductor',  reactionKeys:['cryo_electro'],            buffMult:1.7, enemyBias:{ grunt:5 } },
+  { id:'swarm',    name:'Рой мелочи',           name_en:'Swarm of Weaklings', desc:'Огромное число слабых, но многочисленных мобов.', desc_en:'A huge number of weak but numerous mobs.',           icon:'⚡', reactionName:'Наэлектризованность', reactionName_en:'Electro-Charged', reactionKeys:['electro_hydro'],           buffMult:1.8, enemyBias:{ grunt:5, runner:2 }, countMult:1.4, hpMultLevel:0.7 },
+  { id:'melt',     name:'Ледяной пожар',        name_en:'Frozen Blaze',      desc:'Огонь и лёд сталкиваются — эфириалы то леденеют, то тают.', desc_en:'Fire and ice collide — etherials keep freezing and melting.', icon:'🧊', reactionName:'Таяние', reactionName_en:'Melt',  reactionKeys:['cryo_pyro'],  buffMult:1.7, enemyBias:{ shielded:3, grunt:3 } },
+  { id:'steam',    name:'Паровой прорыв',       name_en:'Steam Breakthrough', desc:'Влажная волна легко превращается в обжигающий пар.',      desc_en:'The wet wave easily turns into scalding steam.',      icon:'💨', reactionName:'Пар',    reactionName_en:'Steam', reactionKeys:['hydro_pyro'], buffMult:1.7, enemyBias:{ wrecker:2, runner:2, grunt:2 } },
 ];
 
 function generatePath() {
@@ -271,7 +360,20 @@ class TDScene extends Phaser.Scene {
     this.costTexts = {};
     this.tileImages = [];
 
-    this.PATH = generatePath();
+    const run = (SAVE_DATA && SAVE_DATA.run && SAVE_DATA.run.wave > 0) ? SAVE_DATA.run : null;
+
+    if (run) {
+      this.wave = run.wave;
+      this.level = run.level;
+      this.gold = run.gold;
+      this.lives = run.lives;
+      this.mult = Object.assign(this.mult, run.mult || {});
+      this.reviewRequested = !!run.reviewRequested;
+      this.currentTheme = this.level >= 2 ? THEMES[(this.level - 2) % THEMES.length] : null;
+      this.PATH = Array.isArray(run.path) && run.path.length > 1 ? run.path : generatePath();
+    } else {
+      this.PATH = generatePath();
+    }
     this.recomputeBuildable();
 
     this.cameras.main.setBackgroundColor(PALETTE.sceneBg);
@@ -279,6 +381,12 @@ class TDScene extends Phaser.Scene {
     this.drawStaticUI();
     this.drawTopHud();
     this.drawBottomUI();
+
+    if (run && Array.isArray(run.towers)) {
+      run.towers.forEach(td => this.restoreTower(td));
+      this.refreshBuildableMarkers();
+      this.updateUIText();
+    }
 
     if (typeof Bridge !== 'undefined') {
       Bridge.notifyGameReady();
@@ -288,7 +396,11 @@ class TDScene extends Phaser.Scene {
       if (IS_MOBILE) this.input.once('pointerdown', () => Bridge.toggleFullscreen());
     }
 
-    if (this.bestWave > 0) this.showBanner('С возвращением!', 'Ваш рекорд: волна ' + this.bestWave + ' (уровень ' + this.bestLevel + ')');
+    if (run) {
+      this.showBanner(T('welcome_back'), T('continuing_from_wave', { wave: this.wave, level: this.level }));
+    } else if (this.bestWave > 0) {
+      this.showBanner(T('welcome_back'), T('your_record', { wave: this.bestWave, level: this.bestLevel }));
+    }
 
     this.rangePreview = this.add.circle(0, 0, 0, 0x8a6fd6, 0.10).setStrokeStyle(1, 0x8a6fd6, 0.5).setVisible(false);
 
@@ -587,15 +699,17 @@ class TDScene extends Phaser.Scene {
     ];
     let cursorX = marginX;
     const chips = leftDefs.map(d => { const c = { key: d.key, x: cursorX, w: d.w }; cursorX += d.w + gapC; return c; });
-    const towersW = 110;
-    const towersX = PLAY_W - marginX - towersW;
+    const langW = 44;
+    const langX = PLAY_W - marginX - langW;
+    const towersW = 94;
+    const towersX = langX - gapC - towersW;
     chips.push({ key: 'towers', x: towersX, w: towersW });
     this.tooltipContent = {
-      gold: 'Золото — трать на новых тян и их прокачку.',
-      lives: 'Жизни. Если эфириал доходит до конца пути — теряется жизнь. 0 жизней = поражение.',
-      wave: 'Текущая волна врагов в этом уровне (всего ' + WAVES_PER_LEVEL + ' волн на уровень).',
-      level: 'Номер уровня. Каждые ' + WAVES_PER_LEVEL + ' волн карта меняется и можно выбрать улучшение.',
-      towers: 'Сколько тян размещено. Лимит на поле: ' + MAX_TOWERS + '. КД между установкой тян одного типа: 10с.',
+      gold: T('tooltip_gold'),
+      lives: T('tooltip_lives'),
+      wave: T('tooltip_wave', { n: WAVES_PER_LEVEL }),
+      level: T('tooltip_level', { n: WAVES_PER_LEVEL }),
+      towers: T('tooltip_towers', { n: MAX_TOWERS }),
     };
 
     const bg = this.add.graphics().setDepth(HUD_DEPTH);
@@ -623,9 +737,19 @@ class TDScene extends Phaser.Scene {
     this.themeChipZone.on('pointerover', () => {
       if (!this.currentTheme) return;
       this.showTooltip(this.themeChipX + this.themeChipW / 2, chipY + chipH + 8,
-        'Уровень усиливает реакцию «' + this.currentTheme.reactionName + '» (×' + this.currentTheme.buffMult + ') и увеличивает дальность башен нужной стихии.');
+        T('tooltip_theme', { reaction: L(this.currentTheme, 'reactionName'), mult: this.currentTheme.buffMult }));
     });
     this.themeChipZone.on('pointerout', () => this.hideTooltip());
+
+    this.langBtnGfx = this.add.graphics().setDepth(HUD_DEPTH);
+    this.panelShadow(this.langBtnGfx, langX, chipY, langW, chipH, 12);
+    this.langBtnGfx.fillStyle(0xf6f0fb, 1).fillRoundedRect(langX, chipY, langW, chipH, 12);
+    this.langBtnGfx.lineStyle(1.5, PALETTE.panelStroke, 1).strokeRoundedRect(langX, chipY, langW, chipH, 12);
+    this.langBtnText = this.txt(langX + langW / 2, chipY + chipH / 2, LANG.toUpperCase(), { fontFamily: 'Arial', fontSize: '14px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(HUD_DEPTH + 1);
+    const langZone = this.add.zone(langX, chipY, langW, chipH).setOrigin(0, 0).setInteractive({ useHandCursor: true }).setDepth(HUD_DEPTH + 2);
+    langZone.on('pointerover', () => { this.showTooltip(langX + langW / 2, chipY + chipH + 8, T('switch_language')); this.langBtnGfx.lineStyle(2, PALETTE.accentA, 0.9).strokeRoundedRect(langX, chipY, langW, chipH, 12); });
+    langZone.on('pointerout', () => { this.hideTooltip(); this.langBtnGfx.clear(); this.panelShadow(this.langBtnGfx, langX, chipY, langW, chipH, 12); this.langBtnGfx.fillStyle(0xf6f0fb, 1).fillRoundedRect(langX, chipY, langW, chipH, 12); this.langBtnGfx.lineStyle(1.5, PALETTE.panelStroke, 1).strokeRoundedRect(langX, chipY, langW, chipH, 12); });
+    langZone.on('pointerdown', () => this.toggleLanguage());
 
     this.tooltipGfx = this.add.graphics().setDepth(HUD_DEPTH + 10).setVisible(false);
     this.tooltipText = this.txt(0, 0, '', { fontFamily: 'Arial', fontSize: '13px', color: '#ffffff', wordWrap: { width: 260 } }).setDepth(HUD_DEPTH + 11).setVisible(false);
@@ -646,7 +770,7 @@ class TDScene extends Phaser.Scene {
   hideTooltip() { this.tooltipGfx.setVisible(false); this.tooltipText.setVisible(false); }
 
   effectiveCost(key) { return Math.max(10, Math.round(TOWER_TYPES[key].cost * this.mult.cost)); }
-  refreshCostLabels() { Object.keys(this.costTexts).forEach(key => this.costTexts[key].setText('💰 ' + this.effectiveCost(key))); }
+  refreshCostLabels() { Object.keys(this.costTexts).forEach(key => this.costTexts[key].setText(T('gold_prefix') + this.effectiveCost(key))); }
 
   effectiveRange(type, level) {
     const lvlMult = 1 + (level - 1) * 0.02;
@@ -707,8 +831,8 @@ class TDScene extends Phaser.Scene {
 
       this.add.image(bx + bw / 2, by + bh * 0.30, 'characters_' + key).setDisplaySize(48, 48);
       if (t.element) this.addIcon(bx + bw - 18, by + 14, 'elements', t.element, ELEMENT_ICON[t.element], 18);
-      this.txt(bx + bw / 2, by + bh * 0.55, t.name, { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textDark }).setOrigin(0.5, 0);
-      this.costTexts[key] = this.txt(bx + bw / 2, by + bh * 0.78, '💰 ' + this.effectiveCost(key), { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textAccent }).setOrigin(0.5, 0);
+      this.txt(bx + bw / 2, by + bh * 0.55, L(t, 'name'), { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textDark }).setOrigin(0.5, 0);
+      this.costTexts[key] = this.txt(bx + bw / 2, by + bh * 0.78, T('gold_prefix') + this.effectiveCost(key), { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textAccent }).setOrigin(0.5, 0);
 
       const cdGfx = this.add.graphics().setDepth(60).setVisible(false);
       const cdText = this.txt(bx + bw / 2, by + bh / 2, '', { fontFamily: 'Arial', fontSize: '20px', color: '#ffffff' }).setOrigin(0.5).setDepth(61).setVisible(false);
@@ -732,7 +856,7 @@ class TDScene extends Phaser.Scene {
     const sellZone = this.add.zone(UI_LAYOUT.sellBtnX, UI_LAYOUT.sellBtnY, UI_LAYOUT.sellBtnW, UI_LAYOUT.sellBtnH).setOrigin(0, 0).setInteractive({ useHandCursor: true });
     const sy = UI_LAYOUT.sellBtnY, sh = UI_LAYOUT.sellBtnH;
     this.addIcon(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, sy + sh * 0.30, 'ui', 'sell', '🗑', 30);
-    this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, sy + sh * 0.55, 'Продать', 
+    this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, sy + sh * 0.55, T('sell_button'), 
       { fontFamily: 'Arial', fontSize: '13px', color: PALETTE.textDark, align: 'center' }
     ).setOrigin(0.5, 0);
     this.txt(UI_LAYOUT.sellBtnX + UI_LAYOUT.sellBtnW / 2, sy + sh * 0.78, '60%', 
@@ -775,13 +899,13 @@ class TDScene extends Phaser.Scene {
   }
 
   updateUIText() {
-    this.hudTexts.gold.setText('💰 ' + this.gold);
-    this.hudTexts.lives.setText('❤ ' + this.lives);
-    this.hudTexts.wave.setText('🌊 ' + this.wave);
-    this.hudTexts.level.setText('🗺 Ур.' + this.level);
-    this.hudTexts.towers.setText('🏗 Тян: ' + this.towers.length + '/' + MAX_TOWERS);
+    this.hudTexts.gold.setText(T('gold_prefix') + this.gold);
+    this.hudTexts.lives.setText(T('lives_prefix') + this.lives);
+    this.hudTexts.wave.setText(T('wave_prefix') + this.wave);
+    this.hudTexts.level.setText(T('level_prefix') + this.level);
+    this.hudTexts.towers.setText(T('towers_prefix') + this.towers.length + '/' + MAX_TOWERS);
     if (this.currentTheme) {
-      this.themeBuffText.setText(this.currentTheme.icon + ' ' + this.currentTheme.reactionName + ' ×' + this.currentTheme.buffMult);
+      this.themeBuffText.setText(this.currentTheme.icon + ' ' + L(this.currentTheme, 'reactionName') + ' ×' + this.currentTheme.buffMult);
       this.themeChipGfx.clear();
       this.panelShadow(this.themeChipGfx, this.themeChipX, this.themeChipY, this.themeChipW, this.themeChipH, 12);
       this.themeChipGfx.fillStyle(0xfff3e0, 1).fillRoundedRect(this.themeChipX, this.themeChipY, this.themeChipW, this.themeChipH, 12);
@@ -862,9 +986,9 @@ class TDScene extends Phaser.Scene {
     const { overlay, x, y, w } = modal;
     const cx = x + w / 2;
     const icon = this.addIcon(cx, y + 66, 'themes', theme.id, theme.icon, 56);
-    const title = this.txt(cx, y + 118, 'Тематический уровень:\n' + theme.name, { fontFamily: 'Arial', fontSize: '24px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(3002);
-    const desc = this.txt(cx, y + 168, theme.desc, { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textDark, align: 'center', wordWrap: { width: w - 100 } }).setOrigin(0.5, 0).setDepth(3002);
-    const buff = this.txt(cx, y + 232, 'Бафф уровня: ' + theme.reactionName + ' сильнее в ' + theme.buffMult + ' раза (+дальность тян этой стихии)', { fontFamily: 'Arial', fontSize: '14px', color: '#3f8fae', align: 'center', wordWrap: { width: w - 100 } }).setOrigin(0.5, 0).setDepth(3002);
+    const title = this.txt(cx, y + 118, T('themed_level', { name: L(theme, 'name') }), { fontFamily: 'Arial', fontSize: '24px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(3002);
+    const desc = this.txt(cx, y + 168, L(theme, 'desc'), { fontFamily: 'Arial', fontSize: '15px', color: PALETTE.textDark, align: 'center', wordWrap: { width: w - 100 } }).setOrigin(0.5, 0).setDepth(3002);
+    const buff = this.txt(cx, y + 232, T('level_buff', { reaction: L(theme, 'reactionName'), mult: theme.buffMult }), { fontFamily: 'Arial', fontSize: '14px', color: '#3f8fae', align: 'center', wordWrap: { width: w - 100 } }).setOrigin(0.5, 0).setDepth(3002);
     overlay.push(icon, title, desc, buff);
 
     const elements = themeAffectedElements(theme);
@@ -880,7 +1004,7 @@ class TDScene extends Phaser.Scene {
     btnG.fillStyle(0xe4d8f7, 1).fillRoundedRect(bx, by, bw, bh, 14);
     btnG.lineStyle(2, 0xb79ae0, 1).strokeRoundedRect(bx, by, bw, bh, 14);
     const btnZone = this.add.zone(bx, by, bw, bh).setOrigin(0, 0).setInteractive({ useHandCursor: true }).setDepth(3003);
-    const btnText = this.txt(cx, by + bh / 2, 'Понятно', { fontFamily: 'Arial', fontSize: '17px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(3003);
+    const btnText = this.txt(cx, by + bh / 2, T('got_it'), { fontFamily: 'Arial', fontSize: '17px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(3003);
     overlay.push(btnG, btnZone, btnText);
     btnZone.on('pointerdown', () => { overlay.forEach(o => o.destroy()); onDone(); });
   }
@@ -889,7 +1013,7 @@ class TDScene extends Phaser.Scene {
     const modal = this.openModalWindow(640, 360, 3000);
     const { overlay, x, y, w } = modal;
     const cx = x + w / 2;
-    const title = this.txt(cx, y + 30, 'Выбери улучшение', { fontFamily: 'Arial', fontSize: '22px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(3002);
+    const title = this.txt(cx, y + 30, T('choose_upgrade'), { fontFamily: 'Arial', fontSize: '22px', color: PALETTE.textAccent }).setOrigin(0.5).setDepth(3002);
     overlay.push(title);
 
     const shuffled = Phaser.Utils.Array.Shuffle([...PERKS]);
@@ -906,8 +1030,8 @@ class TDScene extends Phaser.Scene {
       g.lineStyle(2, PALETTE.panelStroke, 1).strokeRoundedRect(bx, cardY, cardW, cardH, 16);
       const zone = this.add.zone(bx, cardY, cardW, cardH).setOrigin(0, 0).setInteractive({ useHandCursor: true }).setDepth(3003);
       const icon = this.addIcon(bx + cardW / 2, cardY + 40, 'perks', perk.id, perk.icon, 36);
-      const name = this.txt(bx + cardW / 2, cardY + 78, perk.name, { fontFamily: 'Arial', fontSize: '14px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(3003);
-      const desc = this.txt(bx + cardW / 2, cardY + 112, perk.desc, { fontFamily: 'Arial', fontSize: '11px', color: PALETTE.textMuted, align: 'center', wordWrap: { width: cardW - 16 } }).setOrigin(0.5, 0).setDepth(3003);
+      const name = this.txt(bx + cardW / 2, cardY + 78, L(perk, 'name'), { fontFamily: 'Arial', fontSize: '14px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(3003);
+      const desc = this.txt(bx + cardW / 2, cardY + 112, L(perk, 'desc'), { fontFamily: 'Arial', fontSize: '11px', color: PALETTE.textMuted, align: 'center', wordWrap: { width: cardW - 16 } }).setOrigin(0.5, 0).setDepth(3003);
       overlay.push(g, zone, icon, name, desc);
 
       zone.on('pointerover', () => { g.clear(); g.fillStyle(0xf6f0fb, 1).fillRoundedRect(bx, cardY, cardW, cardH, 16); g.lineStyle(2, PALETTE.panelStrokeSelected, 1).strokeRoundedRect(bx, cardY, cardW, cardH, 16); });
@@ -919,12 +1043,12 @@ class TDScene extends Phaser.Scene {
   tryPlaceTower(row, col) {
     if (!this.selectedType) return;
     if (!this.buildable[row][col] || this.occupied[row][col]) return;
-    if (this.towers.length >= MAX_TOWERS) { this.showFloatText(colX(col), rowY(row) - 20, 'Лимит тян: ' + MAX_TOWERS, '#d9553f'); return; }
+    if (this.towers.length >= MAX_TOWERS) { this.showFloatText(colX(col), rowY(row) - 20, T('tower_limit_reached', { n: MAX_TOWERS }), '#d9553f'); return; }
     const cdLeft = (this.typeCooldownUntil[this.selectedType] || 0) - this.time.now;
-    if (cdLeft > 0) { this.showFloatText(colX(col), rowY(row) - 20, 'КД: ' + Math.ceil(cdLeft / 1000) + 'с', '#d9553f'); return; }
+    if (cdLeft > 0) { this.showFloatText(colX(col), rowY(row) - 20, T('cooldown_left', { n: Math.ceil(cdLeft / 1000) }), '#d9553f'); return; }
     const t = TOWER_TYPES[this.selectedType];
     const cost = this.effectiveCost(this.selectedType);
-    if (this.gold < cost) { this.showFloatText(colX(col), rowY(row) - 20, 'Не хватает золота', '#d9553f'); return; }
+    if (this.gold < cost) { this.showFloatText(colX(col), rowY(row) - 20, T('not_enough_gold'), '#d9553f'); return; }
 
     this.gold -= cost;
     this.occupied[row][col] = true;
@@ -936,7 +1060,7 @@ class TDScene extends Phaser.Scene {
     const maxHp = TOWER_MAX_HP + this.mult.towerHpBonus;
     const hpBg = this.add.rectangle(cx, cy + 41, 46, 6, 0xffffff, 0.6).setOrigin(0.5);
     const hpFg = this.add.rectangle(cx - 23, cy + 41, 46, 6, 0x6fbf6f).setOrigin(0, 0.5);
-    const levelText = this.txt(cx, cy + 27, 'Ур.1', { fontFamily: 'Arial', fontSize: '11px', color: '#ffffff', padding: { top: 2, bottom: 2, left: 2, right: 2 } }).setOrigin(0.5).setDepth(50);
+    const levelText = this.txt(cx, cy + 27, T('lvl1_short'), { fontFamily: 'Arial', fontSize: '11px', color: '#ffffff', padding: { top: 2, bottom: 2, left: 2, right: 2 } }).setOrigin(0.5).setDepth(50);
     this.towers.push({
       type: t, x: cx, y: cy, row, col, lastFired: -99999, body, shadow, hp: maxHp, maxHp, hpBg, hpFg,
       level: 1, levelText, milestonesApplied: new Set(), baseScaleX: body.scaleX, baseScaleY: body.scaleY,
@@ -946,17 +1070,46 @@ class TDScene extends Phaser.Scene {
     this.updateUIText();
   }
 
+  /**
+   * Re-creates a tower from a saved checkpoint (see saveRunState). Unlike tryPlaceTower,
+   * this doesn't charge gold and doesn't re-apply milestone effects (those are already
+   * baked into the restored this.mult), it just rebuilds the visuals/state at the saved level.
+   */
+  restoreTower(data) {
+    const t = TOWER_TYPES[data.key];
+    if (!t) return;
+    const row = data.row, col = data.col;
+    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
+    this.occupied[row][col] = true;
+
+    const cx = colX(col), cy = rowY(row);
+    const level = Phaser.Math.Clamp(data.level || 1, 1, TOWER_MAX_LEVEL);
+    const scale = 1 + Math.min(0.35, (level - 1) * 0.018);
+    const shadow = this.add.ellipse(cx, cy + 27, 55, 19, 0x2a1f3a, 0.16);
+    const body = this.add.image(cx, cy, 'characters_' + data.key).setDisplaySize(TOWER_BODY * scale, TOWER_BODY * scale);
+    const maxHp = TOWER_MAX_HP + this.mult.towerHpBonus;
+    const hpBg = this.add.rectangle(cx, cy + 41, 46, 6, 0xffffff, 0.6).setOrigin(0.5);
+    const hpFg = this.add.rectangle(cx - 23, cy + 41, 46, 6, 0x6fbf6f).setOrigin(0, 0.5);
+    const levelText = this.txt(cx, cy + 27, T('lvl_short') + level, { fontFamily: 'Arial', fontSize: '11px', color: '#ffffff', padding: { top: 2, bottom: 2, left: 2, right: 2 } }).setOrigin(0.5).setDepth(50);
+    const tower = {
+      type: t, x: cx, y: cy, row, col, lastFired: -99999, body, shadow, hp: maxHp, maxHp, hpBg, hpFg,
+      level, levelText, milestonesApplied: new Set(data.milestones || []), baseScaleX: body.scaleX, baseScaleY: body.scaleY,
+    };
+    this.towers.push(tower);
+    this.createUpgradeBadge(tower);
+  }
+
   tryUpgradeTower(row, col) {
     const tower = this.towers.find(t => t.row === row && t.col === col);
     if (!tower) return;
-    if (tower.level >= TOWER_MAX_LEVEL) { this.showFloatText(tower.x, tower.y - 30, 'Макс. уровень', PALETTE.textMuted); return; }
+    if (tower.level >= TOWER_MAX_LEVEL) { this.showFloatText(tower.x, tower.y - 30, T('max_level'), PALETTE.textMuted); return; }
     const cost = this.upgradeCost(tower);
-    if (this.gold < cost) { this.showFloatText(tower.x, tower.y - 30, 'Нужно 💰' + cost, '#d9553f'); return; }
+    if (this.gold < cost) { this.showFloatText(tower.x, tower.y - 30, T('need_gold', { n: cost }), '#d9553f'); return; }
 
     this.gold -= cost;
     tower.level += 1;
-    this.showFloatText(tower.x, tower.y - 30, 'Ур. ' + tower.level, '#3f8fae');
-    tower.levelText.setText('Ур.' + tower.level);
+    this.showFloatText(tower.x, tower.y - 30, T('upgraded_to', { n: tower.level }), '#3f8fae');
+    tower.levelText.setText(T('lvl_short') + tower.level);
     const scale = 1 + Math.min(0.35, (tower.level - 1) * 0.018);
     tower.body.setDisplaySize(TOWER_BODY * scale, TOWER_BODY * scale);
     tower.baseScaleX = tower.body.scaleX;
@@ -967,7 +1120,7 @@ class TDScene extends Phaser.Scene {
       tower.milestonesApplied.add(tower.level);
       milestone.apply(this);
       this.refreshCostLabels();
-      this.showBanner(tower.type.name + ' · Ур.' + tower.level, milestone.name + ': ' + milestone.desc);
+      this.showBanner(L(tower.type, 'name') + ' · ' + T('lvl_short') + tower.level, L(milestone, 'name') + ': ' + L(milestone, 'desc'));
     }
     this.refreshUpgradeBadge(tower);
     this.updateUIText();
@@ -978,7 +1131,7 @@ class TDScene extends Phaser.Scene {
     if (!tower) return;
     const refund = Math.floor(tower.type.cost * SELL_REFUND_RATIO * (1 + (tower.level - 1) * 0.15));
     this.gold += refund;
-    this.showFloatText(tower.x, tower.y - 30, '+' + refund + '💰', '#c97b2e');
+    this.showFloatText(tower.x, tower.y - 30, T('sell_refund', { n: refund }), '#c97b2e');
     this.destroyTower(tower);
     this.updateUIText();
   }
@@ -1026,7 +1179,7 @@ class TDScene extends Phaser.Scene {
     this.recomputeBuildable();
     this.currentTheme = this.level >= 2 ? THEMES[(this.level - 2) % THEMES.length] : null;
     this.drawLevelBackground();
-    this.showBanner('Уровень ' + this.level, refund > 0 ? ('Карта сменилась. Тян продано: +' + refund + '💰') : 'Карта сменилась');
+    this.showBanner(T('level_n', { n: this.level }), refund > 0 ? T('map_changed_refund', { n: refund }) : T('map_changed'));
     this.updateUIText();
 
     if (typeof Bridge !== 'undefined' && this.level === 3 && !this.reviewRequested) {
@@ -1055,6 +1208,7 @@ class TDScene extends Phaser.Scene {
         this.showPerkChoice(() => {
           this.awaitingPerkChoice = false;
           this.nextWaveCountdown = POST_LEVEL_PAUSE_MS;
+          this.saveRunState();
         });
       };
 
@@ -1296,23 +1450,23 @@ class TDScene extends Phaser.Scene {
             const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
             if (d <= radius) { e2.slowMult = 0; e2.slowUntil = time + 1600 * themeBuff * this.mult.statusDuration; e2.lastFreezeTime = time; }
           }
-          this.showFloatText(enemy.x, enemy.y - 30, 'Ледяной взрыв!', '#3f8fae');
+          this.showFloatText(enemy.x, enemy.y - 30, T('fx_ice_burst'), '#3f8fae');
         } else if (time - enemy.lastFreezeTime >= freezeCd) {
           enemy.slowMult = 0; enemy.slowUntil = time + 1600 * this.mult.statusDuration; enemy.lastFreezeTime = time;
-          this.showFloatText(enemy.x, enemy.y - 30, 'Заморозка!', '#3f8fae');
+          this.showFloatText(enemy.x, enemy.y - 30, T('fx_freeze'), '#3f8fae');
         } else {
           enemy.slowMult = 0.55; enemy.slowUntil = Math.max(enemy.slowUntil, time + 1000);
-          this.showFloatText(enemy.x, enemy.y - 30, 'Заморозка на КД', '#7fa8c0');
+          this.showFloatText(enemy.x, enemy.y - 30, T('fx_freeze_cd'), '#7fa8c0');
         }
         break;
       }
       case 'hydro_pyro':
         this.dealDamage(enemy, Math.round(baseDamage * dmgMult));
-        this.showFloatText(enemy.x, enemy.y - 30, 'Пар!', '#e08040');
+        this.showFloatText(enemy.x, enemy.y - 30, T('fx_steam'), '#e08040');
         break;
       case 'cryo_pyro':
         this.dealDamage(enemy, Math.round(baseDamage * dmgMult));
-        this.showFloatText(enemy.x, enemy.y - 30, 'Таяние!', '#e0973f');
+        this.showFloatText(enemy.x, enemy.y - 30, T('fx_melt'), '#e0973f');
         break;
       case 'electro_hydro': {
         const radius = 90 * RANGE_SCALE * radiusMult;
@@ -1322,7 +1476,7 @@ class TDScene extends Phaser.Scene {
           const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
           if (d <= radius && e2.elementStatus === 'hydro' && this.inField(e2)) this.dealDamage(e2, Math.round(baseDamage * 0.6 * dmgMult));
         }
-        this.showFloatText(enemy.x, enemy.y - 30, 'Наэлектризовано!', '#8a6fc9');
+        this.showFloatText(enemy.x, enemy.y - 30, T('fx_electrocharged'), '#8a6fc9');
         break;
       }
       case 'cryo_electro': {
@@ -1331,7 +1485,7 @@ class TDScene extends Phaser.Scene {
           const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
           if (d <= radius && this.inField(e2)) this.dealDamage(e2, Math.round(baseDamage * 0.8 * dmgMult), true);
         }
-        this.showFloatText(enemy.x, enemy.y - 30, 'Сверхпроводник!', '#8a6fc9');
+        this.showFloatText(enemy.x, enemy.y - 30, T('fx_superconductor'), '#8a6fc9');
         break;
       }
       case 'electro_pyro': {
@@ -1343,7 +1497,7 @@ class TDScene extends Phaser.Scene {
             this.dealDamage(e2, dmg, true);
           }
         }
-        this.showFloatText(enemy.x, enemy.y - 30, 'Перегрузка!', '#d9553f');
+        this.showFloatText(enemy.x, enemy.y - 30, T('fx_overload'), '#d9553f');
         break;
       }
     }
@@ -1363,15 +1517,15 @@ class TDScene extends Phaser.Scene {
     g.fillStyle(0x000000, 0.15).fillRoundedRect(x + 5, y + 8, w, h, 22);
     g.fillStyle(0xfffdfb, 1).fillRoundedRect(x, y, w, h, 22);
     g.lineStyle(3, PALETTE.panelStroke, 1).strokeRoundedRect(x, y, w, h, 22);
-    this.txt(WIDTH / 2, y + 46, 'Игра окончена', { fontFamily: 'Arial', fontSize: '30px', color: '#d9553f' }).setOrigin(0.5).setDepth(4002);
-    this.txt(WIDTH / 2, y + 92, 'Волна ' + this.wave + ' · уровень ' + this.level, { fontFamily: 'Arial', fontSize: '16px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(4002);
-    this.txt(WIDTH / 2, y + 118, isNewRecord ? 'Новый рекорд! 🎉' : ('Рекорд: волна ' + this.bestWave), { fontFamily: 'Arial', fontSize: '14px', color: isNewRecord ? PALETTE.textAccent : PALETTE.textMuted }).setOrigin(0.5).setDepth(4002);
+    this.txt(WIDTH / 2, y + 46, T('game_over'), { fontFamily: 'Arial', fontSize: '30px', color: '#d9553f' }).setOrigin(0.5).setDepth(4002);
+    this.txt(WIDTH / 2, y + 92, T('wave_level_summary', { wave: this.wave, level: this.level }), { fontFamily: 'Arial', fontSize: '16px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(4002);
+    this.txt(WIDTH / 2, y + 118, isNewRecord ? T('new_record') : T('record_wave', { n: this.bestWave }), { fontFamily: 'Arial', fontSize: '14px', color: isNewRecord ? PALETTE.textAccent : PALETTE.textMuted }).setOrigin(0.5).setDepth(4002);
     const bw = 170, bh = 46, bx = WIDTH / 2 - bw / 2, by = y + h - 74;
     const btnG = this.add.graphics().setDepth(4002);
     btnG.fillStyle(0xe4d8f7, 1).fillRoundedRect(bx, by, bw, bh, 14);
     btnG.lineStyle(2, 0xb79ae0, 1).strokeRoundedRect(bx, by, bw, bh, 14);
     const btnZone = this.add.zone(bx, by, bw, bh).setOrigin(0, 0).setInteractive({ useHandCursor: true }).setDepth(4003);
-    this.txt(WIDTH / 2, by + bh / 2, 'Заново', { fontFamily: 'Arial', fontSize: '17px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(4003);
+    this.txt(WIDTH / 2, by + bh / 2, T('restart_button'), { fontFamily: 'Arial', fontSize: '17px', color: PALETTE.textDark }).setOrigin(0.5).setDepth(4003);
     btnZone.on('pointerdown', () => { btnZone.disableInteractive(); this.restartWithAd(); });
   }
 
@@ -1388,11 +1542,46 @@ class TDScene extends Phaser.Scene {
     if (!shown) proceed();
   }
 
-  /** Persist the best-wave/level record through the platform bridge (cloud or local fallback). */
+  /** Persist the best-wave/level record through the platform bridge (cloud or local fallback).
+   *  This intentionally drops any in-progress "run" checkpoint — the run is over. */
   saveProgress() {
-    const data = { bestWave: this.bestWave, bestLevel: this.bestLevel };
+    const data = { bestWave: this.bestWave, bestLevel: this.bestLevel, lang: LANG };
     SAVE_DATA = data;
     if (typeof Bridge !== 'undefined') Bridge.saveCloudData(data, true);
+  }
+
+  /** Switch the UI language, remember the choice, and re-render everything in the new language. */
+  toggleLanguage() {
+    LANG = LANG === 'ru' ? 'en' : 'ru';
+    if (this.gameOver) {
+      this.saveProgress();
+    } else {
+      SAVE_DATA = Object.assign({}, SAVE_DATA, { lang: LANG });
+      this.saveRunState(true);
+    }
+    try { document.title = T('game_title'); } catch (e) { }
+    this.scene.restart();
+  }
+
+  /**
+   * Checkpoint the in-progress run (wave/level/gold/lives/towers/perks) so the player can
+   * continue where they left off after closing the game. Only call this at "safe" moments
+   * (no enemies alive / not mid-wave), so restoring is always simple and consistent.
+   * @param {boolean} [flush] force an immediate write (e.g. when the game is about to be hidden/closed)
+   */
+  saveRunState(flush) {
+    if (this.gameOver) return;
+    const towers = this.towers.map(t => ({
+      key: t.type.key, row: t.row, col: t.col, level: t.level,
+      milestones: t.milestonesApplied ? Array.from(t.milestonesApplied) : []
+    }));
+    const run = {
+      wave: this.wave, level: this.level, gold: this.gold, lives: this.lives,
+      mult: this.mult, towers, path: this.PATH,
+      reviewRequested: this.reviewRequested, ts: Date.now()
+    };
+    SAVE_DATA = Object.assign({}, SAVE_DATA, { bestWave: this.bestWave, bestLevel: this.bestLevel, run });
+    if (typeof Bridge !== 'undefined') Bridge.saveCloudData(SAVE_DATA, !!flush);
   }
 
   updateCooldownVisuals(time) {
@@ -1405,7 +1594,7 @@ class TDScene extends Phaser.Scene {
         gfx.clear();
         gfx.fillStyle(0x2a2038, 0.55).fillRoundedRect(x, y, w, h, 14);
         gfx.setVisible(true);
-        txt.setText(Math.ceil(left / 1000) + 'с').setVisible(true);
+        txt.setText(Math.ceil(left / 1000) + T('cooldown_suffix_s')).setVisible(true);
       } else {
         gfx.setVisible(false);
         txt.setVisible(false);
@@ -1419,23 +1608,23 @@ class TDScene extends Phaser.Scene {
     const dt = delta / 1000;
 
     if (this.awaitingPerkChoice) {
-      this.waveButtonText.setText('Выбор...');
+      this.waveButtonText.setText(T('choosing'));
       this.waveCountdownText.setText('');
     } else if (!this.waveInProgress) {
       this.nextWaveCountdown -= delta;
       const sec = Math.max(0, Math.ceil(this.nextWaveCountdown / 1000));
       const nextIsTransition = isTransitionWave(this.wave + 1) && !this.levelTransitionDone;
       if (nextIsTransition) {
-        this.waveButtonText.setText('Новый ур.');
-        this.waveCountdownText.setText(sec + ' сек...');
+        this.waveButtonText.setText(T('new_level_button'));
+        this.waveCountdownText.setText(T('seconds_ellipsis', { n: sec }));
       } else {
-        this.waveButtonText.setText('Волна ' + (this.wave + 1));
-        this.waveCountdownText.setText(sec + ' сек...');
+        this.waveButtonText.setText(T('wave_button', { n: this.wave + 1 }));
+        this.waveCountdownText.setText(T('seconds_ellipsis', { n: sec }));
       }
       if (this.nextWaveCountdown <= 0) this.startWave();
     } else {
-      this.waveButtonText.setText('Волна ' + this.wave);
-      this.waveCountdownText.setText('идёт...');
+      this.waveButtonText.setText(T('wave_button', { n: this.wave }));
+      this.waveCountdownText.setText(T('wave_in_progress'));
     }
 
     if (this.awaitingPerkChoice) return;
@@ -1449,6 +1638,7 @@ class TDScene extends Phaser.Scene {
       this.gold += Math.round((20 + this.wave * 2 + this.level * 5) * this.mult.gold);
       this.nextWaveCountdown = isTransitionWave(this.wave + 1) ? 1500 : 3500;
       this.updateUIText();
+      this.saveRunState();
     }
 
     for (const e of [...this.enemies]) {
@@ -1460,7 +1650,7 @@ class TDScene extends Phaser.Scene {
           for (const t of this.towers) {
             if (Phaser.Math.Distance.Between(e.x, e.y, t.x, t.y) <= WRECKER_ATTACK_RANGE) { e.attackTarget = t; break; }
           }
-          if (e.attackTarget && !e.attackWarned) { this.showFloatText(e.x, e.y - 30, 'Крушитель атакует тян!', '#d9553f'); e.attackWarned = true; }
+          if (e.attackTarget && !e.attackWarned) { this.showFloatText(e.x, e.y - 30, T('wrecker_attacks'), '#d9553f'); e.attackWarned = true; }
         }
         if (e.attackTarget) {
           e.attackTimer -= delta;
@@ -1555,10 +1745,13 @@ let activeScene = null;
 let SAVE_DATA = { bestWave: 0, bestLevel: 0 };
 
 function pauseGame() {
+  console.log('game.js: pauseGame() вызван. activeScene =', !!activeScene);
   if (activeScene && activeScene.scene.isActive()) activeScene.scene.pause();
   if (activeScene && activeScene.sound) activeScene.sound.pauseAll();
+  if (activeScene && !activeScene.gameOver) activeScene.saveRunState(true);
 }
 function resumeGame() {
+  console.log('game.js: resumeGame() вызван. activeScene =', !!activeScene);
   if (activeScene && activeScene.scene.isPaused()) activeScene.scene.resume();
   if (activeScene && activeScene.sound) activeScene.sound.resumeAll();
   Bridge.gameplayStart();
@@ -1572,6 +1765,17 @@ if (typeof Bridge !== 'undefined') {
       if (cloud && typeof cloud === 'object') SAVE_DATA = Object.assign({ bestWave: 0, bestLevel: 0 }, cloud);
     } catch (e) { }
 
+    LANG = (SAVE_DATA.lang === 'ru' || SAVE_DATA.lang === 'en') ? SAVE_DATA.lang : detectLang();
+    try { document.title = T('game_title'); } catch (e) { }
+    console.log('game.js: язык интерфейса =', LANG, SAVE_DATA.lang ? '(сохранённый выбор)' : '(определён автоматически)');
+
+    setTimeout(() => {
+      console.log('game.js: страховочный таймер — принудительно завершаю загрузку, если это ещё не сделано');
+      Bridge.notifyGameReady();
+      Bridge.notifyLoadingStop();
+      Bridge.gameplayStart();
+    }, 8000);
+
     activeGame = new Phaser.Game(config);
     activeGame.events.once('ready', () => {
       activeScene = activeGame.scene.getScene('TDScene');
@@ -1579,6 +1783,7 @@ if (typeof Bridge !== 'undefined') {
     });
   });
 } else {
+  LANG = detectLang();
   console.warn('Bridge не найден, запускаю игру напрямую без платформенного SDK.');
   activeGame = new Phaser.Game(config);
   activeGame.events.once('ready', () => { activeScene = activeGame.scene.getScene('TDScene'); });
